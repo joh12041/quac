@@ -11,7 +11,7 @@ import itertools
 import numbers
 import operator
 import os
-import cPickle as pickle
+import pickle
 import sys
 import time
 
@@ -461,7 +461,7 @@ class Test_Sequence(object):
                t.test_tweet_ct = -1e6
                t.unshrink_from_disk(self.args.output_dir, results=True)
                t.attempted = True
-            except IOError, x:
+            except (IOError, x):
                if (x.errno != 2):
                   raise
                t.attempted = False
