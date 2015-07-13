@@ -1,6 +1,6 @@
 # Copyright (c) Los Alamos National Security, LLC, and others.
 
-set terminal pdfcairo enhanced rounded size 5in,3.5in
+set term pdfcairo enhanced rounded size 5in,3.5in
 font_ = "Helvetica Bold"
 
 set xlabel "date" font font_

@@ -22,7 +22,7 @@ if (! mkdir $lockdir); then
     echo 'could not acquire lock; is another parse running?' 1>&2
     exit 1
 else
-    $make all
+    $make all clean
     # FIXME: missing rawtsv files leads to one extra day of .raw.tsv being
     # rebuilt per make run. WTF?
     #$make clean-rawtsv

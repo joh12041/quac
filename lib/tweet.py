@@ -91,7 +91,10 @@ def from_json(text):
    # the output file (i.e., before issue #92 was fixed).
    if (re.search(r'^[0-9a-f\s]*$', text)):
       raise Nothing_To_Parse_Error()
-   j = json.loads(text)  # raises ValueError on parse failure
+   try:
+      j = json.loads(text.replace(r'\\"', r'\"'))  # Isaac: was having problems parsing PostgreSQL JSONs
+   except ValueError:
+      j = json.loads(text)  # raises ValueError on parse failure
    if ('delete' in j):
       return Deletion_Notice.from_json(j)
    elif ('limit' in j):
