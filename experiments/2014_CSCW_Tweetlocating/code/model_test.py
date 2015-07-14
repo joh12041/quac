@@ -55,6 +55,7 @@ TWEETS_PER_SEC_MIN = 12  # i.e., about 1M/day
 GEOTAGGED_FRACTION = 0.95
 
 DATABASE = "twitterstream_zh_us"
+TABLE = "minitwitter"
 
 
 ### Functions ###
@@ -299,10 +300,10 @@ class Test(object):
         #                  % (self.where(phase, 'created_at'))))
         try:
             self.curs.execute(
-                "SELECT tweet_id as tweet_id, created_at as created_at, day as day,
-                    hour as hour, text as text, user_screen_name as user_screen_name,
-                    user_description as user_description, user_lang as user_lang,
-                    user_location as user_location, user_time_zone as user_time_zone, geom as geom
+                "SELECT tweet_id as tweet_id, created_at as created_at, day as day, \
+                    hour as hour, text as text, user_screen_name as user_screen_name, \
+                    user_description as user_description, user_lang as user_lang, \
+                    user_location as user_location, user_time_zone as user_time_zone, geom as geom \
                 FROM tweet WHERE {0}".format(self.where(phase, 'created_at')))
             rows = self.curs.fetchall()
         except:
@@ -354,10 +355,10 @@ class Test(object):
         assert (0 <= trim_head_frac < 1)
         tokens.sort(key=lambda i: len(i[1]), reverse=True)
         tokens = tokens[int(round(trim_head_frac * len(tokens))):]
-            l.debug('%d tokens after head trim' % (len(tokens)))
-            assert (len(tokens) > 0)
-            # done
-            return dict(tokens)
+        l.debug('%d tokens after head trim' % (len(tokens)))
+        assert (len(tokens) > 0)
+        # done
+        return dict(tokens)
 
     def increment(self, duration):
         return Test(self.start + duration, self.training_duration,
@@ -444,7 +445,6 @@ class Test_Sequence(object):
         # db = db_glue.DB(self.args.database_file)
         # assert (db.metadata_get('schema_version') == '5')
         # normalize start and end times
-        # TODO: UPDATE TO POSTGRESQL
         if (self.args.start is None):
             sql = 'SELECT min(created_at) AS st FROM tweet;'
             self.cur.execute(sql)
