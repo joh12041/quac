@@ -54,6 +54,8 @@ TWEETS_PER_SEC_MIN = 12  # i.e., about 1M/day
 # In sample stream, 0.02 would be appropriate.
 GEOTAGGED_FRACTION = 0.95
 
+DATABASE = "twitterstream_zh_us"
+
 
 ### Functions ###
 
@@ -194,239 +196,240 @@ class Test(object):
         self.training_duration = training_d
         self.gap = gap
         self.testing_duration = testing_d
-        self.conn = psycopg2.connect("dbname=twitterstream_zh_us")
-        self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
+        
+    def __str__(self):
+        return str(self.start)
 
-def __str__(self):
-    return str(self.start)
-
-def do_test(self, m_class, db, args, i):
-    self.i = i
-    # create tokenizer
-    tzer = u.class_by_name(args.tokenizer)(args.ngram)
-    # load training & testing tweets from database
-    exu = None if args.dup_users else set()
-    (tr_tweets, tr_users) = self.fetch(db, args.srid, 'training', tzer,
-                                       args.fields, args.unify_fields, exu)
-    exu = None if args.dup_users else tr_users
-    (te_tweets, _) = self.fetch(db, args.srid, 'testing', tzer,
-                                args.fields, args.unify_fields, exu)
-    if (not args.skip_small_tests):
-        self.attempted = True
-    else:
-        l.info('insufficient data, skipping test %s ' % (self))
-        self.attempted = False
-        self.results = []
-        return
-    # tokenize training tweets
-    tr_tokens = self.group_tokens(tr_tweets,
-                                  args.trim_head, args.min_instances)
-    self.train_tweet_ct = len(tr_tweets)
-    self.train_token_ct = len(tr_tokens)
-    # downsample test tweets
-    if (len(te_tweets) > args.test_tweet_limit):
-        te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
-        l.info('sampled %d test tweets per --test-tweet-limit'
-               % (args.test_tweet_limit))
-    self.test_tweet_ct = len(te_tweets)
-    # build model
-    self.model = m_class(tr_tokens, args.srid, tr_tweets)
-    l.debug('starting model build')
-    t_start = time.time()
-    self.model.build()
-    l.info('built model in %s' % (u.fmt_seconds(time.time() - t_start)))
-    t_start = time.time()
-    # test 'em
-    self.results = multicore.do(test_tweet,
-                                (self.model, args.fields), te_tweets)
-    l.info('tested tweets in %s' % (u.fmt_seconds(time.time() - t_start)))
-
-def dump(self, dir_):
-    u.pickle_dump('%s/model.%d' % (dir_, self.i), self.model)
-    u.pickle_dump('%s/results.%d' % (dir_, self.i), self.results)
-
-def enough_data_p(self, train_ct, test_ct):
-    '''Return True if the number of training and testing tweets seem
-       reasonable in relation to the corresponding durations; otherwise,
-       return False. For example:
-
-       >>> from time_ import iso8601_parse
-       >>> from isodate import parse_duration
-       >>> start = iso8601_parse('2012-04-01')
-       >>> tr = parse_duration('P1D')
-       >>> gap = parse_duration('P0D')
-       >>> te = parse_duration('PT1H')
-       >>> test = Test(start, tr, gap, te)
-       >>> test.enough_data_p(10369, 433)
-       True
-       >>> test.enough_data_p(0, 0)
-       False
-       >>> test.enough_data_p(10367, 433)
-       False
-       >>> test.enough_data_p(10369, 431)
-       False'''
-    def threshold(duration):
-        return (duration.total_seconds()
-                * TWEETS_PER_SEC_MIN * GEOTAGGED_FRACTION)
-    enough = True
-    tr_t = threshold(self.training_duration)
-    te_t = threshold(self.testing_duration)
-    if (train_ct < tr_t):
-        enough = False
-        l.debug('need %g tweets per %s to train, but have %d'
-                % (tr_t, self.training_duration, train_ct))
-    if (test_ct < te_t):
-        enough = False
-        l.debug('need %g tweets per %s to test, but have %d'
-                % (te_t, self.testing_duration, test_ct))
-    return enough
-
-def fetch(self, db, srid, phase, tzer, fields, unify, excluded=None):
-    # fetch tweets
-    # rows = db.select((('tweet_id', 'tweet_id'),
-    #                  ('created_at', 'created_at'),
-    #                  ('day', 'day'),
-    #                  ('hour', 'hour'),
-    #                  ('text', 'text'),
-    #                  ('user_screen_name', 'user_screen_name'),
-    #                  ('user_description', 'user_description'),
-    #                  ('user_lang', 'user_lang'),
-    #                  ('user_location', 'user_location'),
-    #                  ('user_time_zone', 'user_time_zone'),
-    #                  ('ST_Transform(geom, %d)' % (srid),
-    #                   '"geom [geometry]"')),
-    #                 ("FROM tweet WHERE %s"
-    #                  % (self.where(phase, 'created_at'))))
-    try:
-        self.curs.execute(
-            "SELECT tweet_id as tweet_id, created_at as created_at, day as day,
-                hour as hour, text as text, user_screen_name as user_screen_name,
-                user_description as user_description, user_lang as user_lang,
-                user_location as user_location, user_time_zone as user_time_zone, geom as geom
-            FROM tweet WHERE {0}".format(self.where(phase, 'created_at')))
-        rows = self.curs.fetchall()
-    except:
-        l.info("tweet selection from db failed")
-        raise Exception
-    l.debug('fetched %d rows' % (len(rows)))
-    tweets_raw = [tweet.Tweet.from_dict(row) for row in rows]
-    l.debug('fetched %d tweets' % (len(tweets_raw)))
-    # filter out duplicate users
-    users = set()
-    tweets = list()
-    for tw in tweets_raw:
-        if (excluded is None or (tw.user_screen_name not in excluded
-                                 and tw.user_screen_name not in users)):
-            users.add(tw.user_screen_name)
-            tweets.append(tw)
-    l.info('%s on %d tweets by %d users'
-           % (phase, len(tweets), len(users)))
-    # tokenize tweets
-    t = time.time()
-    for tw in tweets:
-        # FIXME: This could be refactored to run in parallel
-        tw.tokenize(tzer, fields, unify)
-    l.debug('tokenized in %s' % (u.fmt_seconds(time.time() - t)))
-    # done
-    return (tweets, users)
-
-def group_tokens(self, tweets, trim_head_frac, min_instance_ct):
-    # list of (token, point) pairs
-    tps = []
-    for tw in tweets:
-        for tok in tw.tokens:
-            tps.append((tok, tw.geom))
-    tps.sort(key=operator.itemgetter(0))
-    # grouped
-    tokens = list()
-    for (key, group) in itertools.groupby(tps, key=operator.itemgetter(0)):
-        tokens.append((key, [i[1] for i in group]))
-    l.debug('%d tokens total' % (len(tokens)))
-    # remove infrequent
-    tokens = filter(lambda t: len(t[1]) >= min_instance_ct, tokens)
-    l.debug('%d tokens appear >= %d times' % (len(tokens), min_instance_ct))
-    # convert to multipoint
-    tokens = [(tok, geos.MultiPoint(pts, srid=tweets[0].geom.srid))
-              for (tok, pts) in tokens ]
-    l.info('created %d multipoint token groups, %d total points'
-           % (len(tokens), sum(len(t[1]) for t in tokens)))
-    # remove frequent
-    assert (0 <= trim_head_frac < 1)
-    tokens.sort(key=lambda i: len(i[1]), reverse=True)
-    tokens = tokens[int(round(trim_head_frac * len(tokens))):]
-    l.debug('%d tokens after head trim' % (len(tokens)))
-    assert (len(tokens) > 0)
-    # done
-    return dict(tokens)
-
-def increment(self, duration):
-    return Test(self.start + duration, self.training_duration,
-                self.gap, self.testing_duration)
-
-def meanmedian(self, robj, validp, source, success_attr, attrs):
-    'This is a convoluted method to compute means and medians.'
-    u.zero_attrs(robj, ([success_attr]
-                        + ['m' + a for a in attrs]
-                        + ['d' + a for a in attrs]))
-    if (validp):
-        wins = filter(lambda x: getattr(x, success_attr), source)
-        setattr(robj, success_attr, len(wins))
-        if (len(wins) == 0):
-            l.warning('test had zero successes')
+    def do_test(self, m_class, db, args, i):
+        self.i = i
+        # create tokenizer
+        tzer = u.class_by_name(args.tokenizer)(args.ngram)
+        # load training & testing tweets from database
+        exu = None if args.dup_users else set()
+        (tr_tweets, tr_users) = self.fetch(db, args.srid, 'training', tzer,
+                                           args.fields, args.unify_fields, exu)
+        exu = None if args.dup_users else tr_users
+        (te_tweets, _) = self.fetch(db, args.srid, 'testing', tzer,
+                                    args.fields, args.unify_fields, exu)
+        if (not args.skip_small_tests):
+            self.attempted = True
+        else:
+            l.info('insufficient data, skipping test %s ' % (self))
+            self.attempted = False
+            self.results = []
             return
-        for attr in attrs:
-            vals = [getattr(i, attr) for i in wins]
-            setattr(robj, 'm' + attr, np.mean(vals))
-            setattr(robj, 'd' + attr, np.median(vals))
+        # tokenize training tweets
+        tr_tokens = self.group_tokens(tr_tweets,
+                                      args.trim_head, args.min_instances)
+        self.train_tweet_ct = len(tr_tweets)
+        self.train_token_ct = len(tr_tokens)
+        # downsample test tweets
+        if (len(te_tweets) > args.test_tweet_limit):
+            te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
+            l.info('sampled %d test tweets per --test-tweet-limit'
+                   % (args.test_tweet_limit))
+        self.test_tweet_ct = len(te_tweets)
+        # build model
+        self.model = m_class(tr_tokens, args.srid, tr_tweets)
+        l.debug('starting model build')
+        t_start = time.time()
+        self.model.build()
+        l.info('built model in %s' % (u.fmt_seconds(time.time() - t_start)))
+        t_start = time.time()
+        # test 'em
+        self.results = multicore.do(test_tweet,
+                                (self.model, args.fields), te_tweets)
+        l.info('tested tweets in %s' % (u.fmt_seconds(time.time() - t_start)))
 
-def shrink(self):
-    self.model = u.Deleted_To_Save_Memory()
-    self.results = u.Deleted_To_Save_Memory()
+    def dump(self, dir_):
+        u.pickle_dump('%s/model.%d' % (dir_, self.i), self.model)
+        u.pickle_dump('%s/results.%d' % (dir_, self.i), self.results)
 
-def shrink_to_disk(self, dir_):
-    self.dump(dir_)
-    self.shrink()
+    def enough_data_p(self, train_ct, test_ct):
+        '''Return True if the number of training and testing tweets seem
+           reasonable in relation to the corresponding durations; otherwise,
+           return False. For example:
 
-def summarize(self):
-    # Some metrics should be summed, others averaged, and others ignored.
-    assert (self.attempted == 0 or len(self.results) > 0)
-    self.summary = Metrics()
-    self.summary.test_ct = 1
-    self.summary.attempted_ct = int(self.attempted)
-    if (self.attempted):
-        self.summary.train_tweet_ct = self.train_tweet_ct
-        self.summary.train_token_ct = self.train_token_ct
-        self.summary.test_tweet_ct = self.test_tweet_ct
-    else:
-        self.summary.train_tweet_ct = 0
-        self.summary.train_token_ct = 0
-        self.summary.test_tweet_ct = 0
-    self.meanmedian(self.summary, self.attempted, self.results,
-                    'success_ct', ['ntokens', 'ncomponents', 'npoints',
-                                   'cae', 'sae',
-                                   'contour', 'pra50', 'pra90', 'pra95',
-                                   'covt95', 'covt90', 'covt50', ])
+           >>> from time_ import iso8601_parse
+           >>> from isodate import parse_duration
+           >>> start = iso8601_parse('2012-04-01')
+           >>> tr = parse_duration('P1D')
+           >>> gap = parse_duration('P0D')
+           >>> te = parse_duration('PT1H')
+           >>> test = Test(start, tr, gap, te)
+           >>> test.enough_data_p(10369, 433)
+           True
+           >>> test.enough_data_p(0, 0)
+           False
+           >>> test.enough_data_p(10367, 433)
+           False
+           >>> test.enough_data_p(10369, 431)
+           False'''
+        def threshold(duration):
+            return (duration.total_seconds()
+                    * TWEETS_PER_SEC_MIN * GEOTAGGED_FRACTION)
+        enough = True
+        tr_t = threshold(self.training_duration)
+        te_t = threshold(self.testing_duration)
+        if (train_ct < tr_t):
+            enough = False
+            l.debug('need %g tweets per %s to train, but have %d'
+                    % (tr_t, self.training_duration, train_ct))
+        if (test_ct < te_t):
+            enough = False
+            l.debug('need %g tweets per %s to test, but have %d'
+                    % (te_t, self.testing_duration, test_ct))
+        return enough
 
-def where(self, phase, column):
-    # NOTE: No SQL injection bug because the datetimes we test against are
-    # stringified from real objects, not strings provided by the user.
-    return ("(%s >= '%s' AND %s < '%s')"
-            % (column, getattr(self, phase + '_start'),
-               column, getattr(self, phase + '_end')))
+    def fetch(self, srid, phase, tzer, fields, unify, excluded=None):
+    # fetch tweets
+        # rows = db.select((('tweet_id', 'tweet_id'),
+        #                  ('created_at', 'created_at'),
+        #                  ('day', 'day'),
+        #                  ('hour', 'hour'),
+        #                  ('text', 'text'),
+        #                  ('user_screen_name', 'user_screen_name'),
+        #                  ('user_description', 'user_description'),
+        #                  ('user_lang', 'user_lang'),
+        #                  ('user_location', 'user_location'),
+        #                  ('user_time_zone', 'user_time_zone'),
+        #                  ('ST_Transform(geom, %d)' % (srid),
+        #                   '"geom [geometry]"')),
+        #                 ("FROM tweet WHERE %s"
+        #                  % (self.where(phase, 'created_at'))))
+        try:
+            self.curs.execute(
+                "SELECT tweet_id as tweet_id, created_at as created_at, day as day,
+                    hour as hour, text as text, user_screen_name as user_screen_name,
+                    user_description as user_description, user_lang as user_lang,
+                    user_location as user_location, user_time_zone as user_time_zone, geom as geom
+                FROM tweet WHERE {0}".format(self.where(phase, 'created_at')))
+            rows = self.curs.fetchall()
+        except:
+            l.info("tweet selection from db failed")
+            raise Exception
+        l.debug('fetched %d rows' % (len(rows)))
+        tweets_raw = [tweet.Tweet.from_dict(row) for row in rows]
+        l.debug('fetched %d tweets' % (len(tweets_raw)))
+        # filter out duplicate users
+        users = set()
+        tweets = list()
+        for tw in tweets_raw:
+            if (excluded is None or (tw.user_screen_name not in excluded
+                                     and tw.user_screen_name not in users)):
+                users.add(tw.user_screen_name)
+                tweets.append(tw)
+        l.info('%s on %d tweets by %d users'
+               % (phase, len(tweets), len(users)))
+        # tokenize tweets
+        t = time.time()
+        for tw in tweets:
+            # FIXME: This could be refactored to run in parallel
+            tw.tokenize(tzer, fields, unify)
+        l.debug('tokenized in %s' % (u.fmt_seconds(time.time() - t)))
+        # done
+        return (tweets, users)
 
-def unshrink_from_disk(self, dir_, model=False, results=False):
-    assert (model or results)
-    if (model and isinstance(self.model, u.Deleted_To_Save_Memory)):
-        self.model = u.pickle_load('%s/model.%d' % (dir_, self.i))
-    if (results and isinstance(self.results, u.Deleted_To_Save_Memory)):
-        self.results = u.pickle_load('%s/results.%d' % (dir_, self.i))
+    def group_tokens(self, tweets, trim_head_frac, min_instance_ct):
+        # list of (token, point) pairs
+        tps = []
+        for tw in tweets:
+            for tok in tw.tokens:
+                tps.append((tok, tw.geom))
+        tps.sort(key=operator.itemgetter(0))
+        # grouped
+        tokens = list()
+        for (key, group) in itertools.groupby(tps, key=operator.itemgetter(0)):
+            tokens.append((key, [i[1] for i in group]))
+        l.debug('%d tokens total' % (len(tokens)))
+        # remove infrequent
+        tokens = filter(lambda t: len(t[1]) >= min_instance_ct, tokens)
+        l.debug('%d tokens appear >= %d times' % (len(tokens), min_instance_ct))
+        # convert to multipoint
+        tokens = [(tok, geos.MultiPoint(pts, srid=tweets[0].geom.srid))
+                  for (tok, pts) in tokens ]
+        l.info('created %d multipoint token groups, %d total points'
+               % (len(tokens), sum(len(t[1]) for t in tokens)))
+        # remove frequent
+        assert (0 <= trim_head_frac < 1)
+        tokens.sort(key=lambda i: len(i[1]), reverse=True)
+        tokens = tokens[int(round(trim_head_frac * len(tokens))):]
+            l.debug('%d tokens after head trim' % (len(tokens)))
+            assert (len(tokens) > 0)
+            # done
+            return dict(tokens)
+
+    def increment(self, duration):
+        return Test(self.start + duration, self.training_duration,
+                    self.gap, self.testing_duration)
+
+    def meanmedian(self, robj, validp, source, success_attr, attrs):
+        'This is a convoluted method to compute means and medians.'
+        u.zero_attrs(robj, ([success_attr]
+                            + ['m' + a for a in attrs]
+                            + ['d' + a for a in attrs]))
+        if (validp):
+            wins = filter(lambda x: getattr(x, success_attr), source)
+            setattr(robj, success_attr, len(wins))
+            if (len(wins) == 0):
+                l.warning('test had zero successes')
+                return
+            for attr in attrs:
+                vals = [getattr(i, attr) for i in wins]
+                setattr(robj, 'm' + attr, np.mean(vals))
+                setattr(robj, 'd' + attr, np.median(vals))
+
+    def shrink(self):
+        self.model = u.Deleted_To_Save_Memory()
+        self.results = u.Deleted_To_Save_Memory()
+
+    def shrink_to_disk(self, dir_):
+        self.dump(dir_)
+        self.shrink()
+
+    def summarize(self):
+        # Some metrics should be summed, others averaged, and others ignored.
+        assert (self.attempted == 0 or len(self.results) > 0)
+        self.summary = Metrics()
+        self.summary.test_ct = 1
+        self.summary.attempted_ct = int(self.attempted)
+        if (self.attempted):
+            self.summary.train_tweet_ct = self.train_tweet_ct
+            self.summary.train_token_ct = self.train_token_ct
+            self.summary.test_tweet_ct = self.test_tweet_ct
+        else:
+            self.summary.train_tweet_ct = 0
+            self.summary.train_token_ct = 0
+            self.summary.test_tweet_ct = 0
+        self.meanmedian(self.summary, self.attempted, self.results,
+                        'success_ct', ['ntokens', 'ncomponents', 'npoints',
+                                       'cae', 'sae',
+                                       'contour', 'pra50', 'pra90', 'pra95',
+                                       'covt95', 'covt90', 'covt50', ])
+
+    def where(self, phase, column):
+        # NOTE: No SQL injection bug because the datetimes we test against are
+        # stringified from real objects, not strings provided by the user.
+        return ("(%s >= '%s' AND %s < '%s')"
+                % (column, getattr(self, phase + '_start'),
+                   column, getattr(self, phase + '_end')))
+
+    def unshrink_from_disk(self, dir_, model=False, results=False):
+        assert (model or results)
+        if (model and isinstance(self.model, u.Deleted_To_Save_Memory)):
+            self.model = u.pickle_load('%s/model.%d' % (dir_, self.i))
+        if (results and isinstance(self.results, u.Deleted_To_Save_Memory)):
+            self.results = u.pickle_load('%s/results.%d' % (dir_, self.i))
 
 
 class Test_Sequence(object):
 
     def __init__(self, args):
         self.args = args
+        self.conn = psycopg2.connect("dbname={0}".format(DATABASE))
+        self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
+        l.info('opened database {0}'.format(DATABASE))
 
     @property
     def first_good_test(self):
@@ -437,19 +440,20 @@ class Test_Sequence(object):
     def main(self):
         u.memory_use_log()
         t_start = time.time()
-        # TODO: UPDATE TO POSTGRESQL
-        db = db_glue.DB(self.args.database_file)
-        l.info('opened database %s' % (self.args.database_file))
+        # Replaced with self.cur in __init__
+        # db = db_glue.DB(self.args.database_file)
         # assert (db.metadata_get('schema_version') == '5')
         # normalize start and end times
         # TODO: UPDATE TO POSTGRESQL
         if (self.args.start is None):
-            sql = 'SELECT min(created_at) AS "st [timestamp]" FROM tweet'
-            self.args.start = db.sql(sql)[0]['st']
+            sql = 'SELECT min(created_at) AS st FROM tweet;'
+            self.cur.execute(sql)
+            self.args.start = self.cur.fetchone()[0]
         if (self.args.end is None):
-            sql = 'SELECT max(created_at) AS "et [timestamp]" FROM tweet'
+            sql = 'SELECT max(created_at) AS et FROM tweet;'
+            self.cur.execute(sql)
             # add one second because end time is exclusive
-            self.args.end = db.sql(sql)[0]['et'] + timedelta(seconds=1)
+            self.args.end = self.cur.fetchone()[0] + timedelta(seconds=1)
         self.args.start = time_.as_utc(self.args.start)
         self.args.end = time_.as_utc(self.args.end)
         # print test sequence parameters
