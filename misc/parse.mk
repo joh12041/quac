@@ -113,7 +113,7 @@ json2rawtsv = ../bin/json2rawtsv $(VERBOSE) $(LIMIT) $<
 	$(json2rawtsv)
 
 %.all.tsv:
-	gsort -o $@ -n -u -S $(SORT_MEM) -T . $(filter %.raw.tsv, $^)
+	sort -o $@ -n -u -S $(SORT_MEM) -T . $(filter %.raw.tsv, $^)
 
 %.geo.tsv: %.all.tsv
 # This works by testing the last character of a line: if it's not a tab, then
@@ -123,7 +123,7 @@ json2rawtsv = ../bin/json2rawtsv $(VERBOSE) $(LIMIT) $<
 # (matches found) or 1 (no matches found). Only code >= 2 means a real error,
 # which we really do want to catch. And on older tweet files, no geotagged
 # tweets is common.
-	ggrep -Pv "\t$$" $< > $@ ; [ $$? -le 1 ]
+	grep -Pv "\t$$" $< > $@ ; [ $$? -le 1 ]
 
 pre/metadata:
 	../bin/tsv2metadata $(VERBOSE) $@ $?
@@ -132,4 +132,4 @@ pre/summary.tsv: pre/metadata
 	../bin/summarize-days $? > $@
 
 %.gp.pdf: pre/summary.tsv
-	gcat $? | ../bin/gnuplot-glue $@
+	cat $? | ../bin/gnuplot-glue $@
