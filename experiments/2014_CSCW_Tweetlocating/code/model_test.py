@@ -430,7 +430,7 @@ class Test_Sequence(object):
         self.conn = psycopg2.connect("dbname={0}".format(DATABASE))
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
-        l.info('opened database {0}'.format(DATABASE))
+        l.info('opened database {0}'.format(self.args.database_file))
 
     @property
     def first_good_test(self):
@@ -446,11 +446,11 @@ class Test_Sequence(object):
         # assert (db.metadata_get('schema_version') == '5')
         # normalize start and end times
         if (self.args.start is None):
-            sql = 'SELECT min(created_at) AS st FROM tweet;'
+            sql = 'SELECT min(created_at) AS st FROM {0};'.format(self.table)
             self.cur.execute(sql)
             self.args.start = self.cur.fetchone()[0]
         if (self.args.end is None):
-            sql = 'SELECT max(created_at) AS et FROM tweet;'
+            sql = 'SELECT max(created_at) AS et FROM {0};'.format(self.table)
             self.cur.execute(sql)
             # add one second because end time is exclusive
             self.args.end = self.cur.fetchone()[0] + timedelta(seconds=1)
