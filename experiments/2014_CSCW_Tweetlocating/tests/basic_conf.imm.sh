@@ -14,5 +14,6 @@ model-test \
     --testing P1D \
     --stride P1D \
     --cores $CORE_CT \
+    --skip-small-tests 0 \
     --verbose \
     $GEODB $JOBDIR/test_geo
