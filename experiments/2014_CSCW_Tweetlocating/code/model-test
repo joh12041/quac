@@ -117,9 +117,6 @@ gr = ap.add_argument_group('input and output')
 gr.add_argument('database_file',
                 metavar='DB_FILE',
                 help='database of geotokens')
-gr.add_argument('table_name',
-                metavar='DB_TABLE',
-                help='table name within database with tweets')
 gr.add_argument('output_dir',
                 metavar='OUTPUT_DIR',
                 help='directory for results')
