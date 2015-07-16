@@ -8,7 +8,6 @@ model-test \
     --min-instances 3 \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
-    --fields { tx } { ds } { ln } { lo } { tz } \
     --start $START \
     --end $END \
     --training P2D \
