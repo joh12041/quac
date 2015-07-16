@@ -299,13 +299,13 @@ class Test(object):
         #                 ("FROM tweet WHERE %s"
         #                  % (self.where(phase, 'created_at'))))
         try:
-            self.curs.execute(
+            self.cur.execute(
                 "SELECT tweet_id as tweet_id, created_at as created_at, day as day, \
                     hour as hour, text as text, user_screen_name as user_screen_name, \
                     user_description as user_description, user_lang as user_lang, \
                     user_location as user_location, user_time_zone as user_time_zone, geom as geom \
                 FROM tweet WHERE {0}".format(self.where(phase, 'created_at')))
-            rows = self.curs.fetchall()
+            rows = self.cur.fetchall()
         except:
             l.info("tweet selection from db failed")
             raise Exception
