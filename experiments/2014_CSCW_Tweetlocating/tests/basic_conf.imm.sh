@@ -9,7 +9,6 @@ model-test \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
     --fields { tx } { ds } { ln } { lo } { tz } \
-    --unify-fields { 0 , 1 } \
     --start $START \
     --end $END \
     --training P2D \
