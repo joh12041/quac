@@ -201,16 +201,16 @@ class Test(object):
     def __str__(self):
         return str(self.start)
 
-    def do_test(self, m_class, args, i):
+    def do_test(self, m_class, cur, args, i):
         self.i = i
         # create tokenizer
         tzer = u.class_by_name(args.tokenizer)(args.ngram)
         # load training & testing tweets from database
         exu = None if args.dup_users else set()
-        (tr_tweets, tr_users) = self.fetch(args.srid, 'training', tzer,
+        (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu)
         exu = None if args.dup_users else tr_users
-        (te_tweets, _) = self.fetch(args.srid, 'testing', tzer,
+        (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu)
         if (not args.skip_small_tests):
             self.attempted = True
@@ -282,7 +282,7 @@ class Test(object):
                     % (te_t, self.testing_duration, test_ct))
         return enough
 
-    def fetch(self, srid, phase, tzer, fields, unify, excluded=None):
+    def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None):
     # fetch tweets
         # rows = db.select((('tweet_id', 'tweet_id'),
         #                  ('created_at', 'created_at'),
@@ -299,13 +299,13 @@ class Test(object):
         #                 ("FROM tweet WHERE %s"
         #                  % (self.where(phase, 'created_at'))))
         try:
-            self.cur.execute(
+            cur.execute(
                 "SELECT tweet_id as tweet_id, created_at as created_at, day as day, \
                     hour as hour, text as text, user_screen_name as user_screen_name, \
                     user_description as user_description, user_lang as user_lang, \
                     user_location as user_location, user_time_zone as user_time_zone, geom as geom \
                 FROM tweet WHERE {0}".format(self.where(phase, 'created_at')))
-            rows = self.cur.fetchall()
+            rows = cur.fetchall()
         except:
             l.info("tweet selection from db failed")
             raise Exception
@@ -489,7 +489,7 @@ class Test_Sequence(object):
                     t.attempted = False
             else:
                 l.info('starting test %d of %d: %s' % (i+1, len(self.schedule), t))
-                t.do_test(model_class, self.args, i)
+                t.do_test(model_class, self.cur, self.args, i)
             t.summarize()
             if (t.attempted):
                 if (self.args.profile_memory):
