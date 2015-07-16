@@ -201,7 +201,7 @@ class Test(object):
     def __str__(self):
         return str(self.start)
 
-    def do_test(self, m_class, db, args, i):
+    def do_test(self, m_class, args, i):
         self.i = i
         # create tokenizer
         tzer = u.class_by_name(args.tokenizer)(args.ngram)
@@ -489,7 +489,7 @@ class Test_Sequence(object):
                     t.attempted = False
             else:
                 l.info('starting test %d of %d: %s' % (i+1, len(self.schedule), t))
-                t.do_test(model_class, db, self.args, i)
+                t.do_test(model_class, self.args, i)
             t.summarize()
             if (t.attempted):
                 if (self.args.profile_memory):
