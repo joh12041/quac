@@ -1,8 +1,8 @@
 # Source this in your test scripts to parse command line arguments correctly.
 
 CORE_CT_DEFAULT=1
-START_DEFAULT=2012-01-25
-END_DEFAULT=2013-01-24
+START_DEFAULT=2014-10-20
+END_DEFAULT=2014-11-19
 
 sedopt='-r'
 if [ `uname` == "Darwin" ]; then

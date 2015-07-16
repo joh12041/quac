@@ -54,7 +54,7 @@ TWEETS_PER_SEC_MIN = 12  # i.e., about 1M/day
 # In sample stream, 0.02 would be appropriate.
 GEOTAGGED_FRACTION = 0.95
 
-DATABASE = "twitterstream_zh_us"
+DATABASE = "twidber"
 TABLE = "minitwitter"
 
 
@@ -207,10 +207,10 @@ class Test(object):
         tzer = u.class_by_name(args.tokenizer)(args.ngram)
         # load training & testing tweets from database
         exu = None if args.dup_users else set()
-        (tr_tweets, tr_users) = self.fetch(db, args.srid, 'training', tzer,
+        (tr_tweets, tr_users) = self.fetch(args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu)
         exu = None if args.dup_users else tr_users
-        (te_tweets, _) = self.fetch(db, args.srid, 'testing', tzer,
+        (te_tweets, _) = self.fetch(args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu)
         if (not args.skip_small_tests):
             self.attempted = True
@@ -427,7 +427,7 @@ class Test_Sequence(object):
 
     def __init__(self, args):
         self.args = args
-        self.conn = psycopg2.connect("dbname={0}".format(DATABASE))
+        self.conn = psycopg2.connect("dbname={0} user=twidber password=twidber".format(DATABASE))
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
         l.info('opened database {0}'.format(self.args.database_file))
