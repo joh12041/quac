@@ -10,8 +10,8 @@ model-test \
     --model-parms weight_f:wt_inv_error_sae \
     --start $START \
     --end $END \
-    --training P2D \
-    --testing P1D \
+    --training P4D \
+    --testing P2D \
     --stride P1D \
     --cores $CORE_CT \
     --skip-small-tests 0 \
