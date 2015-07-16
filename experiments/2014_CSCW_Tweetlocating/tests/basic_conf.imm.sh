@@ -16,4 +16,4 @@ model-test \
     --stride P1D \
     --cores $CORE_CT \
     --verbose \
-    $GEODB $JOBDIR/@id
+    $GEODB $JOBDIR/test_geo
