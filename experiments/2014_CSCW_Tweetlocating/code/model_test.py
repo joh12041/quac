@@ -345,7 +345,7 @@ class Test(object):
             tokens.append((key, [i[1] for i in group]))
         l.debug('%d tokens total' % (len(tokens)))
         # remove infrequent
-        tokens = filter(lambda t: len(t[1]) >= min_instance_ct, tokens)
+        tokens = list(filter(lambda t: len(t[1]) >= min_instance_ct, tokens))
         l.debug('%d tokens appear >= %d times' % (len(tokens), min_instance_ct))
         # convert to multipoint
         tokens = [(tok, geos.MultiPoint(pts, srid=tweets[0].geom.srid))
