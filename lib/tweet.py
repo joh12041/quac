@@ -280,7 +280,10 @@ class Tweet(object):
       o.user_lang = dict_['user_lang']
       o.user_location = dict_['user_location']
       o.user_time_zone = dict_['user_time_zone']
-      o.geom = dict_['geom']
+      if 'geom' in dict_:
+          o.geom = dict_['geom']
+      else:
+          o.geom = o.coords_to_point(dict_['lon'], dict_['lat'])
       o.geom_src = dict_['geom_src']
       return o
 
