@@ -231,6 +231,7 @@ gr.add_argument('--profile-memory',
 gr.add_argument('--start-test',
                 metavar='N',
                 type=int,
+                default=1,
                 help='start with test N, loading prior from disk (default = 1)')
 gr.add_argument('--profile-speed',
                 action='store_true',
