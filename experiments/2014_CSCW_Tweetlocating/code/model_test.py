@@ -371,7 +371,7 @@ class Test(object):
                             + ['m' + a for a in attrs]
                             + ['d' + a for a in attrs]))
         if (validp):
-            wins = filter(lambda x: getattr(x, success_attr), source)
+            wins = list(filter(lambda x: getattr(x, success_attr), source))
             setattr(robj, success_attr, len(wins))
             if (len(wins) == 0):
                 l.warning('test had zero successes')
