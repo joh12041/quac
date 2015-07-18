@@ -125,7 +125,7 @@ class Metrics(object):
         if (not isinstance(other, numbers.Real)):
             return NotImplemented
         kwargs = { k: getattr(self, k) / other
-                   for k in vars(self).iterkeys()
+                   for k in vars(self).keys()
                    if isinstance(getattr(self, k), numbers.Real) }
         return self.__class__(**kwargs)
 
@@ -135,7 +135,7 @@ class Metrics(object):
 
     @property
     def numeric_vars(self):
-        return OrderedDict((k, v) for (k, v) in sorted(vars(self).iteritems())
+        return OrderedDict((k, v) for (k, v) in sorted(vars(self).items())
                            if isinstance(v, numbers.Real))
 
     @property
@@ -642,7 +642,7 @@ class Test_Sequence(object):
                 r = tweetrows[j]
                 if (not r.success_ct and not include_fails_p):
                     continue
-                for token in r.location_estimate.explanation.iterkeys():
+                for token in r.location_estimate.explanation.keys():
                     tokens[token].add(i)
                 if (not geofiles_p):
                     tsv.writerow([i, j] + r.summary_dict.values())
