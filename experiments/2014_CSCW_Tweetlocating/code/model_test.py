@@ -107,7 +107,7 @@ class Metrics(object):
 
     def __add__(self, other):
         kwargs = { k: getattr(self, k) + getattr(other, k)
-                   for k in vars(self).iterkeys()
+                   for k in vars(self).keys()
                    if isinstance(getattr(self, k), numbers.Real) }
         return self.__class__(**kwargs)
 
