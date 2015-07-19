@@ -513,7 +513,7 @@ class Test_Sequence(object):
                             test_indices)
         l.debug('saving pickled summary')
         self.memory_use = u.memory_use()
-        self.memory_use_peak = u.memory_use(True)
+        self.memory_use_peak = "Not implemented"
         self.time_use = time.time() - t_start
         u.pickle_dump('%s/%s' % (self.args.output_dir, 'summary'), self)
         u.memory_use_log()
@@ -577,13 +577,13 @@ class Test_Sequence(object):
     def tsv_save_tests(self, filename, test_indices):
         l.info('writing summary results of tests to %s' % (filename))
         tsv = self.tsv_open(filename)
-        tsv.writerow(['test_idx'] + self.schedule[0].parms.keys()
+        tsv.writerow(['test_idx'] + list(self.schedule[0].parms.keys())
                      + self.schedule[0].summary.keys_as_list)
         tsv.writerow(['mean'] + ([None] * len(self.schedule[0].parms))
                      + self.summary.as_list)
         for i in sorted(test_indices):
             t = self.schedule[i]
-            tsv.writerow([i] + t.parms.values() + t.summary.as_list)
+            tsv.writerow([i] + list(t.parms.values()) + t.summary.as_list)
 
     def tsv_save_tokens(self, filename, geofiles_p, geoimage_width,
                         test_indices, token_idx, tw_tokens):

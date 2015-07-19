@@ -2,7 +2,7 @@
 
 CORE_CT_DEFAULT=1
 START_DEFAULT=2014-10-20
-END_DEFAULT=2014-11-19
+END_DEFAULT=2014-10-30
 
 sedopt='-r'
 if [ `uname` == "Darwin" ]; then
