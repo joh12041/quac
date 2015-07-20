@@ -284,20 +284,6 @@ class Test(object):
 
     def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None):
     # fetch tweets
-        # rows = db.select((('tweet_id', 'tweet_id'),
-        #                  ('created_at', 'created_at'),
-        #                  ('day', 'day'),
-        #                  ('hour', 'hour'),
-        #                  ('text', 'text'),
-        #                  ('user_screen_name', 'user_screen_name'),
-        #                  ('user_description', 'user_description'),
-        #                  ('user_lang', 'user_lang'),
-        #                  ('user_location', 'user_location'),
-        #                  ('user_time_zone', 'user_time_zone'),
-        #                  ('ST_Transform(geom, %d)' % (srid),
-        #                   '"geom [geometry]"')),
-        #                 ("FROM tweet WHERE %s"
-        #                  % (self.where(phase, 'created_at'))))
         try:
             cur.execute(
                 "SELECT tweet_id as tweet_id, created_at as created_at, day as day, \
