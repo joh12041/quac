@@ -54,8 +54,8 @@ TWEETS_PER_SEC_MIN = 12  # i.e., about 1M/day
 # In sample stream, 0.02 would be appropriate.
 GEOTAGGED_FRACTION = 0.95
 
-DATABASE = "twidber"
-TABLE = "minitwitter"
+DATABASE = "twitterstream_zh_us"
+TABLE = "quac_test"
 
 
 ### Functions ###
@@ -291,7 +291,7 @@ class Test(object):
                     user_description as user_description, user_lang as user_lang, \
                     user_location as user_location, user_time_zone as user_time_zone, \
                     lat as lat, lon as lon, geotagged as geom_src \
-                FROM tweet WHERE {0}".format(self.where(phase, 'created_at')))
+                FROM {0} WHERE {1}".format(TABLE, self.where(phase, 'created_at')))
             rows = cur.fetchall()
         except:
             l.info("tweet selection from db failed")
@@ -414,7 +414,7 @@ class Test_Sequence(object):
 
     def __init__(self, args):
         self.args = args
-        self.conn = psycopg2.connect("dbname={0} user=twidber password=twidber".format(DATABASE))
+        self.conn = psycopg2.connect("dbname={0}".format(DATABASE))
         self.cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         psycopg2.extensions.register_adapter(dict, psycopg2.extras.Json)
         l.info('opened database {0}'.format(self.args.database_file))

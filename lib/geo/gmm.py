@@ -12,6 +12,8 @@ import sys
 import time
 
 from django.contrib.gis import geos
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # for testing
 import numpy as np
 import osgeo.gdal as ogdal

@@ -16,4 +16,4 @@ model-test \
     --cores $CORE_CT \
     --skip-small-tests 0 \
     --verbose \
-    $GEODB $JOBDIR/geo_20_July_2015
+    $GEODB $JOBDIR/geo_24_July_2015
