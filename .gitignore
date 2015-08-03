@@ -117,3 +117,6 @@ tests/twitter/tweets/geo
 tests/standalone/wp-access/hashed*
 tests/standalone/wp-access/metadata*
 tests/standalone/wp-access/missing.tsv
+
+# Pycharm Support
+.idea
