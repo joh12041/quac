@@ -199,7 +199,8 @@ class Tweet(object):
                 'user_location',
                 'user_time_zone',
                 'geom',
-                'geom_src')
+                'geom_src',
+                'region_id')
 
    def __init__(self):
       self.tokens = None
@@ -265,6 +266,7 @@ class Tweet(object):
          # - may not exist at all in older tweets (KeyError)
          o.geom = None
          o.geom_src = None
+      o.region_id = None
       return o
 
    @classmethod
@@ -285,6 +287,10 @@ class Tweet(object):
       else:
           o.geom = o.coords_to_point(dict_['lon'], dict_['lat'])
       o.geom_src = dict_['geom_src']
+      if 'region_id' in dict_:
+          o.region_id = dict_['region_id']
+      else:
+          o.region_id = None
       return o
 
    @classmethod
@@ -302,6 +308,10 @@ class Tweet(object):
       o.user_time_zone = list_[7]
       o.geom = o.coords_to_point(list_[8], list_[9])
       o.geom_src = list_[10]
+      try:
+        o.region_id = list_[11]
+      except:
+        o.region_id = None
       return o
 
    def coords_to_point(self, lon, lat):
@@ -330,7 +340,8 @@ class Tweet(object):
                'user_location':     self.user_location,
                'user_time_zone':    self.user_time_zone,
                'geom':              self.geom,
-               'geom_src':          self.geom_src }
+               'geom_src':          self.geom_src,
+               'region_id':         self.region_id }
 
    def to_list(self):
       'Return a list representation of this object.'
@@ -350,7 +361,8 @@ class Tweet(object):
                self.user_time_zone,
                lon,
                lat,
-               self.geom_src ]
+               self.geom_src,
+               self.region_id ]
 
    def tokenize(self, tker, fields, unify):
       '''Tokenize given fields and set self.tokens to the resulting sequence.

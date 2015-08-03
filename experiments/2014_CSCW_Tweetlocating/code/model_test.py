@@ -18,7 +18,6 @@ import time
 from django.contrib.gis import geos
 import numpy as np
 
-#import db_glue
 import psycopg2
 import psycopg2.extras
 from geo import srs
@@ -226,7 +225,8 @@ class Test(object):
         self.train_token_ct = len(tr_tokens)
         # downsample test tweets
         if (len(te_tweets) > args.test_tweet_limit):
-            te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
+            # te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
+            te_tweets = filter_geometry()
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
         self.test_tweet_ct = len(te_tweets)
@@ -290,7 +290,7 @@ class Test(object):
                     hour as hour, text as text, user_screen_name as user_screen_name, \
                     user_description as user_description, user_lang as user_lang, \
                     user_location as user_location, user_time_zone as user_time_zone, \
-                    lat as lat, lon as lon, geotagged as geom_src \
+                    lat as lat, lon as lon, geotagged as geom_src, county_fips as region_id \
                 FROM {0} WHERE {1}".format(TABLE, self.where(phase, 'created_at')))
             rows = cur.fetchall()
         except:
@@ -317,6 +317,17 @@ class Test(object):
         l.debug('tokenized in %s' % (u.fmt_seconds(time.time() - t)))
         # done
         return (tweets, users)
+
+    def filter_geometry(self, tweets, ses, cur, how, limit):
+        potential_ses = ['urban', 'income']
+        potential_how = ['balance', 'increase_bias', 'decrease_bias']
+        if ses not in potential_ses:
+            l.warning("not filtering because {0} not in {1}.".format(ses, potential_ses))
+            return u.rand.sample(tweets, limit)
+        if how not in potential_how:
+            l.warning("not filtering because {0} not an option.".format(how, potential_how))
+            return u.rand.sample(tweets, limit)
+        cur.execute("SELECT fips as fips, {0} as {0}, weight as weight from quac_ses".format(ses))
 
     def group_tokens(self, tweets, trim_head_frac, min_instance_ct):
         # list of (token, point) pairs
