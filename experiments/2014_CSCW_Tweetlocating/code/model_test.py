@@ -6,12 +6,11 @@ from __future__ import division
 
 from collections import defaultdict, OrderedDict
 from datetime import timedelta
-import io
 import itertools
+import math
 import numbers
 import operator
 import os
-import pickle
 import sys
 import time
 
@@ -328,6 +327,23 @@ class Test(object):
             l.warning("not filtering because {0} not an option.".format(how, potential_how))
             return u.rand.sample(tweets, limit)
         cur.execute("SELECT fips as fips, {0} as {0}, weight as weight from quac_ses".format(ses))
+
+        # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
+        urban_weights = {      'balance' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
+                         'increase_bias' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
+                         'decrease_bias' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062}}
+
+        ses_by_county = {}
+        tweet_bins = {}
+        for tweet in tweets:
+            if tweet.region_id:
+                state = math.floor(int(tweet.region_id) / 1000)
+                ses_class = ses_by_county[tweet.region_id]  # expect three different (e.g. rural, suburban, urban OR poor, middle-class, wealthy)?
+                tbin = str(state) + ses_class
+                if tbin in tweet_bins:
+                    tweet_bins[tbin].append(tweet)
+                else:
+                    tweet_bins[tbin] = [tweet]
 
     def group_tokens(self, tweets, trim_head_frac, min_instance_ct):
         # list of (token, point) pairs
