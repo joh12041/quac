@@ -16,6 +16,7 @@ import time
 import json
 from shapely.geometry import shape
 from shapely.wkt import loads
+import csv
 
 from django.contrib.gis import geos
 import numpy as np
@@ -210,6 +211,8 @@ class Test(object):
         exu = None if args.dup_users else set()
         (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu)
+        self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
+                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson")
         exu = None if args.dup_users else tr_users
         (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu)
@@ -227,10 +230,11 @@ class Test(object):
         self.train_token_ct = len(tr_tokens)
         # downsample test tweets
         if (len(te_tweets) > args.test_tweet_limit):
-            # te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
-            te_tweets = filter_geometry()
+            te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
+            self.map_tweets(te_tweets, "{0}/test_tweets_{1}.csv".format(args.output_dir, i),
+                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson")
         self.test_tweet_ct = len(te_tweets)
         # build model
         self.model = m_class(tr_tokens, args.srid, tr_tweets)
@@ -309,6 +313,8 @@ class Test(object):
                                      and tw.user_screen_name not in users)):
                 users.add(tw.user_screen_name)
                 tweets.append(tw)
+        if phase == "training":
+            self.filter_geometry(tweets,"urban",cur,"balance")
         l.info('%s on %d tweets by %d users'
                % (phase, len(tweets), len(users)))
         # tokenize tweets
@@ -320,15 +326,15 @@ class Test(object):
         # done
         return (tweets, users)
 
-    def filter_geometry(self, tweets, ses, cur, how, limit):
+    def filter_geometry(self, tweets, ses, cur, how):
         potential_ses = ['urban', 'income']
         potential_how = ['balance', 'increase_bias', 'decrease_bias']
         if ses not in potential_ses:
             l.warning("not filtering because {0} not in {1}.".format(ses, potential_ses))
-            return u.rand.sample(tweets, limit)
+            return
         if how not in potential_how:
             l.warning("not filtering because {0} not an option.".format(how, potential_how))
-            return u.rand.sample(tweets, limit)
+            return
         cur.execute("SELECT fips as fips, {0} as {0}, weight as weight from quac_ses".format(ses))
 
         # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
@@ -394,26 +400,43 @@ class Test(object):
             l.warning("mapping will not occur because geojson {0} is an invalid json object".format(geojsonfn))
             return
 
+        ID_FIELD = "FIPS"
+
         count = 0
         distribution = {}
         for region in geography['features']:
-            distribution[region['properties']['FIPS']] = 0
+            distribution[region['properties'][ID_FIELD]] = 0
         for tweet in tweets:
             for region in distribution:
-                if tweet.region_id == region['properties']['FIPS']:
+                if tweet.region_id == region['properties'][ID_FIELD]:
                     count += 1
                     region['properties']['count_tweets'] += 1
-        l.info('{0} out of {1] tweets matched via region_id.'.format(count, len(tweets)))
+        l.info('{0} out of {1} tweets matched via region_id.'.format(count, len(tweets)))
         if count < 0.95*len(tweets):  # loose metric for whether most of the region ids are populated
+            count = 0
             l.warning('switching to slower geojson containment method')
-            shapes = []
+            shapes = {}
             for region in geography['features']:
-                distribution[region['properties']['FIPS']] = 0
-                shapes.append(shape(region['geometry']))
+                distribution[region['properties'][ID_FIELD]] = 0
+                shapes[region['properties'][ID_FIELD]] = shape(region['geometry'])
             for tweet in tweets:
-                pt = loads('POINT ({0} {1})'.format())
-                for region in shapes:
-                    if region.contains()
+                try:
+                    pt = loads('POINT ({0} {1})'.format(tweet.geom.x, tweet.geom.y))
+                    for region in shapes:
+                        if shapes[region].contains(pt):
+                            distribution[region] += 1
+                            count += 1
+                            continue
+                except:
+                    continue
+            l.info('{0} out of {1} tweets matched via containment.'.format(count, len(tweets)))
+
+        with open(outputname, 'w') as fout:
+            csvwriter = csv.writer(fout)
+            csvwriter.writerow([ID_FIELD, 'count_tweets'])
+            for region in distribution:
+                csvwriter.writerow([region, distribution[region]])
+        l.info("Output counts to {0}".format(outputname))
 
 
 
