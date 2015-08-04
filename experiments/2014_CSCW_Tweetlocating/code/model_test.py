@@ -388,7 +388,7 @@ class Test(object):
         return Test(self.start + duration, self.training_duration,
                     self.gap, self.testing_duration)
 
-    def map_tweets(self, tweets, outputname, geojsonfn="USCounties_bare.geojson", properties_dict=None):
+    def map_tweets(self, tweets, outputname, geojsonfn="USCounties_bare.geojson", properties=[]):
         try:
             with open(geojsonfn, 'r') as fin:
                 geography = json.load(fin)
@@ -403,41 +403,66 @@ class Test(object):
 
         ID_FIELD = "FIPS"
 
-        count = 0
+        count_matched = 0
         distribution = {}
         for region in geography['features']:
-            distribution[region['properties'][ID_FIELD]] = 0
+            distribution[region['properties'][ID_FIELD]] = {'count' : 0}
+            for property in properties:
+                distribution[region['properties'][ID_FIELD]][property] = []
         for tweet in tweets:
             for region in distribution:
-                if tweet.region_id == region['properties'][ID_FIELD]:
-                    count += 1
-                    region['properties']['count_tweets'] += 1
-        l.info('{0} out of {1} tweets matched via region_id.'.format(count, len(tweets)))
-        if count < 0.95*len(tweets):  # loose metric for whether most of the region ids are populated
-            count = 0
-            l.warning('switching to slower geojson containment method')
-            shapes = {}
-            for region in geography['features']:
-                distribution[region['properties'][ID_FIELD]] = 0
-                shapes[region['properties'][ID_FIELD]] = shape(region['geometry'])
-            for tweet in tweets:
-                try:
-                    pt = loads('POINT ({0} {1})'.format(tweet.geom.x, tweet.geom.y))
-                    for region in shapes:
-                        if shapes[region].contains(pt):
-                            distribution[region] += 1
-                            count += 1
-                            continue
-                except:
-                    continue
-            l.info('{0} out of {1} tweets matched via containment.'.format(count, len(tweets)))
+                if tweet.region_id == region:
+                    count_matched += 1
+                    distribution[region]['count'] += 1
+                    for property in properties:
+                        distribution[region][property].append(getattr(tweet, property))
+        l.info('{0} out of {1} tweets matched via region_id.'.format(count_matched, len(tweets)))
+
+        for region in distribution:
+            for property in properties:
+                if distribution[region]['count'] > 0:
+                    distribution[region]['mean_' + property] = np.mean(distribution[region][property])
+                    distribution[region]['med_' + property] = np.median(distribution[region][property])
+                else:
+                    distribution[region]['mean_' + property] = -1
+                    distribution[region]['med_' + property] = -1
+
+
+        # Backup method if region_ids are not populated at high rate, but this shouldn't be needed and complicates
+        #  the procedure so commented out for now. Would need to be updated to support properties_dict.
+        # if count < 0.95*len(tweets):  # loose metric for whether most of the region ids are populated
+        #     count_matched = 0
+        #     l.warning('switching to slower geojson containment method')
+        #     shapes = {}
+        #     for region in geography['features']:
+        #         distribution[region['properties'][ID_FIELD]] = 0
+        #         shapes[region['properties'][ID_FIELD]] = shape(region['geometry'])
+        #     for tweet in tweets:
+        #         try:
+        #             pt = loads('POINT ({0} {1})'.format(tweet.geom.x, tweet.geom.y))
+        #             for region in shapes:
+        #                 if shapes[region].contains(pt):
+        #                     distribution[region] += 1
+        #                     count_matched += 1
+        #                     continue
+        #         except:
+        #             continue
+        #     l.info('{0} out of {1} tweets matched via containment.'.format(count_matched, len(tweets)))
 
         with open(outputname, 'w') as fout:
             csvwriter = csv.writer(fout)
-            csvwriter.writerow([ID_FIELD, 'count_tweets'])
+            header = [ID_FIELD, 'count_tweets']
+            for property in properties:
+                header.append('mean_' + property)
+                header.append('med_' + property)
+            csvwriter.writerow(header)
             for region in distribution:
-                csvwriter.writerow([region, distribution[region]])
-        l.info("Output counts to {0}".format(outputname))
+                line = [region, distribution[region]['count']]
+                for property in properties:
+                    line.append(distribution[region]['mean_' + property])
+                    line.append(distribution[region]['med_' + property])
+                csvwriter.writerow(line)
+        l.info("Output geo stats to {0}".format(outputname))
 
     def meanmedian(self, robj, validp, source, success_attr, attrs):
         'This is a convoluted method to compute means and medians.'
