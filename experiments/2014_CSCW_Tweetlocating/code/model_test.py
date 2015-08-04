@@ -509,11 +509,23 @@ class Test(object):
                                        'covt95', 'covt90', 'covt50', ])
         self.summarize_by_geo('success_ct', outputdir)
 
-    def summarize_by_geo(self, success_attr, outputdir, geojsonfn="USCounties_bare.geojson"):
+    def summarize_by_geo(self, success_attr, outputdir):
         wins = list(filter(lambda x: getattr(x, success_attr), self.results))
         losses = list(filter(lambda x: getattr(x, success_attr) == 0, self.results))
-        self.map_tweets(wins, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
-                        geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson")
+        if wins:
+            self.map_tweets(wins, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
+                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson",
+                            properties=['ntokens', 'ncomponents', 'npoints',
+                                        'cae', 'sae',
+                                        'contour', 'pra50', 'pra90', 'pra95',
+                                        'covt95', 'covt90', 'covt50'])
+        if losses:
+            self.map_tweets(losses, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
+                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson",
+                            properties=['ntokens', 'ncomponents', 'npoints',
+                                        'cae', 'sae',
+                                        'contour', 'pra50', 'pra90', 'pra95',
+                                        'covt95', 'covt90', 'covt50'])
 
 
     def where(self, phase, column):
