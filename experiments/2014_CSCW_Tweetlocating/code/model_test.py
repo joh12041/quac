@@ -151,6 +151,7 @@ class Metrics_Tweet(Metrics):
     def summary_dict(self):
         d = OrderedDict()
         d['tweet_id'] = self.tweet.id
+        d['region_id'] = self.tweet.region_id
         for f in sorted(self.fields):
             d[f] = getattr(self.tweet, f)
         if (self.location_estimate is None):
@@ -387,7 +388,7 @@ class Test(object):
         return Test(self.start + duration, self.training_duration,
                     self.gap, self.testing_duration)
 
-    def map_tweets(self, tweets, outputname, geojsonfn="USCounties_bare.geojson"):
+    def map_tweets(self, tweets, outputname, geojsonfn="USCounties_bare.geojson", properties_dict=None):
         try:
             with open(geojsonfn, 'r') as fin:
                 geography = json.load(fin)
@@ -438,10 +439,6 @@ class Test(object):
                 csvwriter.writerow([region, distribution[region]])
         l.info("Output counts to {0}".format(outputname))
 
-
-
-
-
     def meanmedian(self, robj, validp, source, success_attr, attrs):
         'This is a convoluted method to compute means and medians.'
         u.zero_attrs(robj, ([success_attr]
@@ -466,7 +463,7 @@ class Test(object):
         self.dump(dir_)
         self.shrink()
 
-    def summarize(self):
+    def summarize(self, outputdir=None):
         # Some metrics should be summed, others averaged, and others ignored.
         assert (self.attempted == 0 or len(self.results) > 0)
         self.summary = Metrics()
@@ -485,6 +482,14 @@ class Test(object):
                                        'cae', 'sae',
                                        'contour', 'pra50', 'pra90', 'pra95',
                                        'covt95', 'covt90', 'covt50', ])
+        self.summarize_by_geo('success_ct', outputdir)
+
+    def summarize_by_geo(self, success_attr, outputdir, geojsonfn="USCounties_bare.geojson"):
+        wins = list(filter(lambda x: getattr(x, success_attr), self.results))
+        losses = list(filter(lambda x: getattr(x, success_attr) == 0, self.results))
+        self.map_tweets(wins, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
+                        geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson")
+
 
     def where(self, phase, column):
         # NOTE: No SQL injection bug because the datetimes we test against are
@@ -568,7 +573,7 @@ class Test_Sequence(object):
             else:
                 l.info('starting test %d of %d: %s' % (i+1, len(self.schedule), t))
                 t.do_test(model_class, self.cur, self.args, i)
-            t.summarize()
+            t.summarize(self.args.output_dir)
             if (t.attempted):
                 if (self.args.profile_memory):
                     # We dump a memory profile here because it's the high water
