@@ -13,6 +13,9 @@ import operator
 import os
 import sys
 import time
+import json
+from shapely.geometry import shape
+from shapely.wkt import loads
 
 from django.contrib.gis import geos
 import numpy as np
@@ -377,6 +380,44 @@ class Test(object):
     def increment(self, duration):
         return Test(self.start + duration, self.training_duration,
                     self.gap, self.testing_duration)
+
+    def map_tweets(self, tweets, outputname, geojsonfn="USCounties_bare.geojson"):
+        try:
+            with open(geojsonfn, 'r') as fin:
+                geography = json.load(fin)
+        except IOError as e:
+            l.warning(e)
+            l.warning("mapping will not occur because geojson {0} does not exist".format(geojsonfn))
+            return
+        except ValueError as e:
+            l.warning(e)
+            l.warning("mapping will not occur because geojson {0} is an invalid json object".format(geojsonfn))
+            return
+
+        count = 0
+        distribution = {}
+        for region in geography['features']:
+            distribution[region['properties']['FIPS']] = 0
+        for tweet in tweets:
+            for region in distribution:
+                if tweet.region_id == region['properties']['FIPS']:
+                    count += 1
+                    region['properties']['count_tweets'] += 1
+        l.info('{0} out of {1] tweets matched via region_id.'.format(count, len(tweets)))
+        if count < 0.95*len(tweets):  # loose metric for whether most of the region ids are populated
+            l.warning('switching to slower geojson containment method')
+            shapes = []
+            for region in geography['features']:
+                distribution[region['properties']['FIPS']] = 0
+                shapes.append(shape(region['geometry']))
+            for tweet in tweets:
+                pt = loads('POINT ({0} {1})'.format())
+                for region in shapes:
+                    if region.contains()
+
+
+
+
 
     def meanmedian(self, robj, validp, source, success_attr, attrs):
         'This is a convoluted method to compute means and medians.'
