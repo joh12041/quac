@@ -213,7 +213,7 @@ class Test(object):
         (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu)
         self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
-                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson")
+                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson")
         exu = None if args.dup_users else tr_users
         (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu)
@@ -235,7 +235,7 @@ class Test(object):
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
             self.map_tweets(te_tweets, "{0}/test_tweets_{1}.csv".format(args.output_dir, i),
-                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson")
+                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson")
         self.test_tweet_ct = len(te_tweets)
         # build model
         self.model = m_class(tr_tokens, args.srid, tr_tweets)
@@ -514,14 +514,14 @@ class Test(object):
         losses = list(filter(lambda x: getattr(x, success_attr) == 0, self.results))
         if wins:
             self.map_tweets(wins, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
-                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson",
+                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson",
                             properties=['ntokens', 'ncomponents', 'npoints',
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
                                         'covt95', 'covt90', 'covt50'])
         if losses:
             self.map_tweets(losses, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
-                            geojsonfn="~/GraduateSchool/Geolocation/Johnson/data/USCounties_bare.geojson",
+                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson",
                             properties=['ntokens', 'ncomponents', 'npoints',
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
