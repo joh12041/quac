@@ -234,8 +234,6 @@ class Test(object):
             te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
-            self.map_tweets(te_tweets, "{0}/test_tweets_{1}.csv".format(args.output_dir, i),
-                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson")
         self.test_tweet_ct = len(te_tweets)
         # build model
         self.model = m_class(tr_tokens, args.srid, tr_tweets)
