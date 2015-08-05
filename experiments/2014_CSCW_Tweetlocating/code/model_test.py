@@ -314,8 +314,8 @@ class Test(object):
                                      and tw.user_screen_name not in users)):
                 users.add(tw.user_screen_name)
                 tweets.append(tw)
-        if phase == "training":
-            self.filter_geometry(tweets,"urban",cur,"balance")
+        # if phase == "training":
+            # self.filter_geometry(tweets,"urban",cur,"balance")
         l.info('%s on %d tweets by %d users'
                % (phase, len(tweets), len(users)))
         # tokenize tweets
