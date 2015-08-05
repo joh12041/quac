@@ -67,7 +67,7 @@ def test_tweet(model, fields, tw):
     assert (tw.geom.srid == model.srid)
     if (tw.id % HEARTBEAT_INTERVAL == 0):
         l.debug('testing tweet id %d' % (tw.id))
-    r = Metrics_Tweet(tweet=tw, fields=fields)
+    r = Metrics_Tweet(tweet=tw, fields=fields, region_id = tw.region_id)
     le = model.locate(tw.tokens, 0.50)
     r.location_estimate = le
     if (le is None):
@@ -152,6 +152,7 @@ class Metrics_Tweet(Metrics):
         d = OrderedDict()
         d['tweet_id'] = self.tweet.id
         d['region_id'] = self.tweet.region_id
+
         for f in sorted(self.fields):
             d[f] = getattr(self.tweet, f)
         if (self.location_estimate is None):
