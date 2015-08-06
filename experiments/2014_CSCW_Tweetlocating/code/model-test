@@ -239,6 +239,12 @@ gr.add_argument('--profile-speed',
 gr.add_argument('--verbose',
                 action='store_true',
                 help='give more verbose output')
+gr.add_argument('--ses',
+                default='',
+                help='ses variable to resample training data on.')
+gr.add_argument('--how_filter',
+                default='',
+                help='how to adjust ses balance in resampling of training data.')
 
 try:
 

@@ -211,8 +211,12 @@ class Test(object):
         tzer = u.class_by_name(args.tokenizer)(args.ngram)
         # load training & testing tweets from database
         exu = None if args.dup_users else set()
-        (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
+        (tr_tweets, _) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu)
+        tr_tweets = self.filter_geometry(tr_tweets, args.ses, cur, args.how_filter, 30000)  # downsample to 30000 per Reid's paper
+        tr_users = set()
+        for tweet in tr_tweets:
+            tr_users.add(tweet.user_screen_name)
         self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
                             geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson")
         exu = None if args.dup_users else tr_users
@@ -326,33 +330,54 @@ class Test(object):
         # done
         return (tweets, users)
 
-    def filter_geometry(self, tweets, ses, cur, how):
-        potential_ses = ['urban', 'income']
-        potential_how = ['balance', 'increase_bias', 'decrease_bias']
-        if ses not in potential_ses:
-            l.warning("not filtering because {0} not in {1}.".format(ses, potential_ses))
-            return
-        if how not in potential_how:
-            l.warning("not filtering because {0} not an option.".format(how, potential_how))
-            return
-        cur.execute("SELECT fips as fips, {0} as {0}, weight as weight from quac_ses".format(ses))
-
+    def filter_geometry(self, tweets, ses, cur, how, limit):
         # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
-        urban_weights = {      'balance' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
-                         'increase_bias' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
-                         'decrease_bias' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062}}
+        potential_ses = ['urban', 'income']
+        if ses == 'urban':
+            weights = { 'balance' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
+                       'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
+                          'urban' : {1:0.534, 2:0.372, 3:0.044, 4:0.020, 5:0.019, 6:0.013},
+                          'rural' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108}}
+        elif ses == 'income':
+            weights = { 'balance' : {},
+                       'expected' : {},
+                         'wealthy': {},
+                            'poor': {}}
 
-        ses_by_county = {}
+        if ses not in potential_ses:
+            l.warning("filtering randomly because {0} not in {1}.".format(ses, potential_ses))
+            return u.rand.sample(tweets, limit)
+        if how not in weights:
+            l.warning("filtering randomly because {0} not an option.".format(how))
+            return u.rand.sample(tweets, limit)
+        cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format(ses))
+
         tweet_bins = {}
+
+        for category in weights[how]:
+            weights[how][category] = math.ceil(weights[how][category] * limit)
+            tweet_bins[category] = []
+
+        counties = {}
+        for county in cur:
+            counties[county[0]] = county[1]
+
         for tweet in tweets:
-            if tweet.region_id:
-                state = math.floor(int(tweet.region_id) / 1000)
-                ses_class = ses_by_county[tweet.region_id]  # expect three different (e.g. rural, suburban, urban OR poor, middle-class, wealthy)?
-                tbin = str(state) + ses_class
-                if tbin in tweet_bins:
-                    tweet_bins[tbin].append(tweet)
-                else:
-                    tweet_bins[tbin] = [tweet]
+            if tweet.region_id in counties:
+                tweet_bins[counties[tweet.region_id]].append(tweet)
+
+        final_tweets = []
+        for category in tweet_bins:
+            while len(tweet_bins[category]) > weights[how][category]:
+                index = u.rand.randrange(0, len(tweet_bins[category]))
+                tweet_bins[category].pop(index)
+            if len(tweet_bins[category]) < weights[how][category]:
+                l.warn('insufficient tweets in category {0}. only have {1} of {2}.'.format(category,
+                                                                                           len(tweet_bins[category]),
+                                                                                           weights[how][category]))
+            final_tweets.extend(tweet_bins[category])
+
+        return final_tweets
 
     def group_tokens(self, tweets, trim_head_frac, min_instance_ct):
         # list of (token, point) pairs
