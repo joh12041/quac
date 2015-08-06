@@ -360,7 +360,7 @@ class Test(object):
 
         counties = {}
         for county in cur:
-            counties[county[0]] = county[1]
+            counties[int(county[0])] = county[1]
 
         for tweet in tweets:
             if tweet.region_id in counties:
@@ -430,9 +430,9 @@ class Test(object):
         count_matched = 0
         distribution = {}
         for region in geography['features']:
-            distribution[region['properties'][ID_FIELD]] = {'count' : 0}
+            distribution[int(region['properties'][ID_FIELD])] = {'count' : 0}
             for property in properties:
-                distribution[region['properties'][ID_FIELD]][property] = []
+                distribution[int(region['properties'][ID_FIELD])][property] = []
         for tweet in tweets:
             for region in distribution:
                 if tweet.region_id == region:

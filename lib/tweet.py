@@ -288,7 +288,7 @@ class Tweet(object):
           o.geom = o.coords_to_point(dict_['lon'], dict_['lat'])
       o.geom_src = dict_['geom_src']
       if 'region_id' in dict_:
-          o.region_id = dict_['region_id']
+          o.region_id = int(dict_['region_id'])
       else:
           o.region_id = None
       return o
@@ -309,7 +309,7 @@ class Tweet(object):
       o.geom = o.coords_to_point(list_[8], list_[9])
       o.geom_src = list_[10]
       try:
-        o.region_id = list_[11]
+        o.region_id = int(list_[11])
       except:
         o.region_id = None
       return o
