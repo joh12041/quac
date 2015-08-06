@@ -236,7 +236,7 @@ class Test(object):
         self.train_token_ct = len(tr_tokens)
         # downsample test tweets
         if (len(te_tweets) > args.test_tweet_limit):
-            te_tweets = u.rand.sample(te_tweets, args.test_tweet_limit)
+            te_tweets = self.filter_geometry(te_tweets, args.ses, cur, args.how_filter, args.test_tweet_limit)
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
         self.test_tweet_ct = len(te_tweets)
@@ -334,12 +334,12 @@ class Test(object):
         # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
         potential_ses = ['urban', 'income']
         if ses == 'urban':
-            weights = { 'balance' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
+            weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
                           'urban' : {1:0.534, 2:0.372, 3:0.044, 4:0.020, 5:0.019, 6:0.013},
                           'rural' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108}}
         elif ses == 'income':
-            weights = { 'balance' : {},
+            weights = {'balanced' : {},
                        'expected' : {},
                          'wealthy': {},
                             'poor': {}}
