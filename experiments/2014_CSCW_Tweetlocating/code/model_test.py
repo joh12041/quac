@@ -211,17 +211,13 @@ class Test(object):
         tzer = u.class_by_name(args.tokenizer)(args.ngram)
         # load training & testing tweets from database
         exu = None if args.dup_users else set()
-        (tr_tweets, _) = self.fetch(cur, args.srid, 'training', tzer,
-                                           args.fields, args.unify_fields, exu)
-        tr_tweets = self.filter_geometry(tr_tweets, args.ses, cur, args.how_filter, 30000)  # downsample to 30000 per Reid's paper
-        tr_users = set()
-        for tweet in tr_tweets:
-            tr_users.add(tweet.user_screen_name)
+        (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
+                                           args.fields, args.unify_fields, exu, args)
         self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
                             geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson")
         exu = None if args.dup_users else tr_users
         (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
-                                    args.fields, args.unify_fields, exu)
+                                    args.fields, args.unify_fields, exu, args)
         if (not args.skip_small_tests):
             self.attempted = True
         else:
@@ -292,7 +288,7 @@ class Test(object):
                     % (te_t, self.testing_duration, test_ct))
         return enough
 
-    def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None):
+    def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None, args):
     # fetch tweets
         try:
             cur.execute(
@@ -317,8 +313,11 @@ class Test(object):
                                      and tw.user_screen_name not in users)):
                 users.add(tw.user_screen_name)
                 tweets.append(tw)
-        # if phase == "training":
-            # self.filter_geometry(tweets,"urban",cur,"balance")
+        if phase == "training":
+            tweets = self.filter_geometry(tweets, args.ses, cur, args.how_filter, 30000)  # downsample to 30000 per Reid's paper
+            users = set()
+            for tweet in tweets:
+               users.add(tweet.user_screen_name)
         l.info('%s on %d tweets by %d users'
                % (phase, len(tweets), len(users)))
         # tokenize tweets
@@ -332,13 +331,13 @@ class Test(object):
 
     def filter_geometry(self, tweets, ses, cur, how, limit):
         # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
-        potential_ses = ['urban', 'income']
+        potential_ses = ['urban', 'age', 'population']
         if ses == 'urban':
             weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
                           'urban' : {1:0.534, 2:0.372, 3:0.044, 4:0.020, 5:0.019, 6:0.013},
                           'rural' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108}}
-        elif ses == 'income':
+        elif ses == 'age':
             weights = {'balanced' : {},
                        'expected' : {},
                          'wealthy': {},
