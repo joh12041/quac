@@ -484,12 +484,18 @@ class Test(object):
             for property in properties:
                 header.append('mean_' + property)
                 header.append('med_' + property)
+                header.append('1Q_' + property)
+                header.append('3Q_' + property)
+                header.append('sd_' + property)
             csvwriter.writerow(header)
             for region in distribution:
                 line = [region, distribution[region]['count']]
                 for property in properties:
                     line.append(distribution[region]['mean_' + property])
                     line.append(distribution[region]['med_' + property])
+                    line.append(distribution[region]['1Q_' + property])
+                    line.append(distribution[region]['3Q_' + property])
+                    line.append(distribution[region]['sd_' + property])
                 csvwriter.writerow(line)
         l.info("Output geo stats to {0}".format(outputname))
 
