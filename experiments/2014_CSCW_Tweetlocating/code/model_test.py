@@ -35,7 +35,7 @@ l = u.l
 
 # If debug logging is on, log a message every this many tweets (very
 # approximately).
-HEARTBEAT_INTERVAL = 100
+HEARTBEAT_INTERVAL = 3000
 
 # We expect to see at least this many tweets per second on a continuous basis
 # (e.g., even during slow times of day). If we see less, conclude there is a
@@ -448,8 +448,8 @@ class Test(object):
                     distribution[region]['mean_' + property] = np.mean(distribution[region][property])
                     distribution[region]['med_' + property] = np.median(distribution[region][property])
                 else:
-                    distribution[region]['mean_' + property] = -1
-                    distribution[region]['med_' + property] = -1
+                    distribution[region]['mean_' + property] = None
+                    distribution[region]['med_' + property] = None
 
 
         # Backup method if region_ids are not populated at high rate, but this shouldn't be needed and complicates
