@@ -446,9 +446,15 @@ class Test(object):
                 if distribution[region]['count'] > 0:
                     distribution[region]['mean_' + property] = np.mean(distribution[region][property])
                     distribution[region]['med_' + property] = np.median(distribution[region][property])
+                    distribution[region]['1Q_' + property] = np.percentile(distribution[region][property], 25)
+                    distribution[region]['3Q_' + property] = np.percentile(distribution[region][property], 75)
+                    distribution[region]['sd_' + property] = np.std(distribution[region][property])
                 else:
                     distribution[region]['mean_' + property] = None
                     distribution[region]['med_' + property] = None
+                    distribution[region]['1Q_' + property] = None
+                    distribution[region]['3Q_' + property] = None
+                    distribution[region]['sd_' + property] = None
 
 
         # Backup method if region_ids are not populated at high rate, but this shouldn't be needed and complicates
