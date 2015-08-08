@@ -288,7 +288,7 @@ class Test(object):
                     % (te_t, self.testing_duration, test_ct))
         return enough
 
-    def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None, args):
+    def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None, args=None):
     # fetch tweets
         try:
             cur.execute(
