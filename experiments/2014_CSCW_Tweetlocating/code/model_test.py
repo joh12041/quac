@@ -316,8 +316,8 @@ class Test(object):
         if phase == "training":
             tweets = self.filter_geometry(tweets, args.ses, cur, args.how_filter, 30000)  # downsample to 30000 per Reid's paper
             users = set()
-            for tweet in tweets:
-               users.add(tweet.user_screen_name)
+            for tw in tweets:
+               users.add(tw.user_screen_name)
         l.info('%s on %d tweets by %d users'
                % (phase, len(tweets), len(users)))
         # tokenize tweets
