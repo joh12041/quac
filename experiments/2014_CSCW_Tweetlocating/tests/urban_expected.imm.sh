@@ -19,4 +19,4 @@ model-test \
     --verbose \
     --ses urban \
     --how_filter Random \
-    $GEODB $JOBDIR/urban_random
+    $GEODB $JOBDIR/urban_random_60000
