@@ -232,7 +232,7 @@ class Test(object):
         self.train_token_ct = len(tr_tokens)
         # downsample test tweets
         if (len(te_tweets) > args.test_tweet_limit):
-            te_tweets = self.filter_geometry(te_tweets, args.ses, cur, args.how_filter, args.test_tweet_limit)
+            te_tweets = self.filter_geometry(te_tweets, 'random', cur, '', args.test_tweet_limit)
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
         self.test_tweet_ct = len(te_tweets)
@@ -331,7 +331,7 @@ class Test(object):
 
     def filter_geometry(self, tweets, ses, cur, how, limit):
         # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
-        potential_ses = ['urban', 'age', 'population']
+        potential_ses = ['urban', 'age', 'population', 'random']
         if ses == 'urban':
             weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
@@ -342,6 +342,11 @@ class Test(object):
                        'expected' : {},
                          'wealthy': {},
                             'poor': {}}
+        elif ses == 'population':
+            weights = {}  # TODO: based on county population
+        elif ses == 'random':
+            l.info("Randomly downsampling tweets from {0} to {1} per test limit.".format(len(tweets),limit))
+            return u.rand.sample(tweets, limit)
 
         if ses not in potential_ses:
             l.warning("filtering randomly because {0} not in {1}.".format(ses, potential_ses))
