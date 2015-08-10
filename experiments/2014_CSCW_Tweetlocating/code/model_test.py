@@ -341,7 +341,8 @@ class Test(object):
                        'expected' : {},
                            'older': {},
                          'younger': {}}
-
+        else:
+            weights = {how:{}}
         if ses not in potential_ses:
             l.warning("filtering randomly because {0} not in {1}.".format(ses, potential_ses))
             return u.rand.sample(tweets, limit)
@@ -356,7 +357,6 @@ class Test(object):
         tweet_bins = {}
 
         if ses == 'pop_pct' or ses == 'area_pct':
-            weights = {how:{}}
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
