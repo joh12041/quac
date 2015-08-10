@@ -360,7 +360,7 @@ class Test(object):
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
-                weights[how][int(county[0])] = county[1]*limit
+                weights[how][int(county[0])] = math.ceil(county[1]*limit)
                 counties[int(county[0])] = int(county[0])
         else:
             for category in weights[how]:
