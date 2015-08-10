@@ -115,7 +115,8 @@ json2rawtsv = ../bin/json2rawtsv $(VERBOSE) $(LIMIT) $<
 %.all.tsv:
 	sort -o $@ -n -u -S $(SORT_MEM) -T . $(filter %.raw.tsv, $^)
 
-%.geo.tsv: %.all.tsv
+# Comment this out because just creates duplicate files for my data
+# %.geo.tsv: %.all.tsv
 # This works by testing the last character of a line: if it's not a tab, then
 # the last column (geotag source) contains something, so there's a geotag.
 #
@@ -123,7 +124,7 @@ json2rawtsv = ../bin/json2rawtsv $(VERBOSE) $(LIMIT) $<
 # (matches found) or 1 (no matches found). Only code >= 2 means a real error,
 # which we really do want to catch. And on older tweet files, no geotagged
 # tweets is common.
-	grep -Pv "\t$$" $< > $@ ; [ $$? -le 1 ]
+#	grep -Pv "\t$$" $< > $@ ; [ $$? -le 1 ]
 
 pre/metadata:
 	../bin/tsv2metadata $(VERBOSE) $@ $?
