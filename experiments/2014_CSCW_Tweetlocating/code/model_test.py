@@ -330,8 +330,7 @@ class Test(object):
         return (tweets, users)
 
     def filter_geometry(self, tweets, ses, cur, how, limit):
-        # TODO: update to match this: https://docs.google.com/spreadsheets/d/1-rqwtsATqAuhRMk7_O4a5DDr8lVyjBMuGotALCH430g/edit#gid=394314015
-        potential_ses = ['urban', 'age', 'population', 'random']
+        potential_ses = ['urban', 'age', 'pop_pct', 'random', 'area_pct']  # these correspond with a PostgreSQL table column names
         if ses == 'urban':
             weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
@@ -340,13 +339,8 @@ class Test(object):
         elif ses == 'age':
             weights = {'balanced' : {},
                        'expected' : {},
-                         'wealthy': {},
-                            'poor': {}}
-        elif ses == 'population':
-            weights = {}  # TODO: based on county population
-        elif ses == 'random':
-            l.info("Randomly downsampling tweets from {0} to {1} per test limit.".format(len(tweets),limit))
-            return u.rand.sample(tweets, limit)
+                           'older': {},
+                         'younger': {}}
 
         if ses not in potential_ses:
             l.warning("filtering randomly because {0} not in {1}.".format(ses, potential_ses))
@@ -354,17 +348,28 @@ class Test(object):
         if how not in weights:
             l.warning("filtering randomly because {0} not an option.".format(how))
             return u.rand.sample(tweets, limit)
-        cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format(ses))
+        if ses == 'random':
+            l.info("Randomly downsampling tweets from {0} to {1} per test limit.".format(len(tweets),limit))
+            return u.rand.sample(tweets, limit)
+        cur.execute("SELECT fips as fips, {0} as ses from quac_ses".format(ses))
 
         tweet_bins = {}
 
-        for category in weights[how]:
-            weights[how][category] = math.ceil(weights[how][category] * limit)
-            tweet_bins[category] = []
+        if ses == 'pop_pct' or ses == 'area_pct':
+            weights = {how:{}}
+            counties = {}
+            for county in cur:
+                tweet_bins[int(county[0])] = []
+                weights[how][int(county[0])] = county[1]*limit
+                counties[int(county[0])] = int(county[0])
+        else:
+            for category in weights[how]:
+                weights[how][category] = math.ceil(weights[how][category] * limit)
+                tweet_bins[category] = []
 
-        counties = {}
-        for county in cur:
-            counties[int(county[0])] = county[1]
+            counties = {}
+            for county in cur:
+                counties[int(county[0])] = county[1]
 
         for tweet in tweets:
             if tweet.region_id in counties:
