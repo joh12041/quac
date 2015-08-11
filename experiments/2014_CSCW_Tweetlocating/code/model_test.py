@@ -505,7 +505,7 @@ class Test(object):
 
         with open(outputname, 'w') as fout:
             csvwriter = csv.writer(fout)
-            header = [ID_FIELD, 'count_tweets']
+            header = [ID_FIELD, 'count_tweets', 'within_county', 'within_100km']
             for property in properties:
                 header.append('mean_' + property)
                 header.append('med_' + property)
@@ -514,7 +514,7 @@ class Test(object):
                 header.append('sd_' + property)
             csvwriter.writerow(header)
             for fips in counties:
-                line = [fips, counties[fips]['count']]
+                line = [fips, counties[fips]['count'], counties[fips]['within_county'], counties[fips]['within_100km']]
                 for property in properties:
                     line.append(counties[fips]['mean_' + property])
                     line.append(counties[fips]['med_' + property])
@@ -529,7 +529,7 @@ class Test(object):
             header[0] = 'urban_class'
             csvwriter.writerow(header)
             for region in tweet_bins:
-                line = [region, tweet_bins[region]['count']]
+                line = [region, tweet_bins[region]['count'], tweet_bins[region]['within_county'], tweet_bins[region]['within_100km']]
                 for property in properties:
                     line.append(tweet_bins[region]['mean_' + property])
                     line.append(tweet_bins[region]['med_' + property])
