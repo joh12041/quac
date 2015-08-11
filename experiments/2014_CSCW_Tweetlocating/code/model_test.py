@@ -578,10 +578,7 @@ class Test(object):
         if losses:
             self.map_tweets(losses, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
                             cur,
-                            properties=['ntokens', 'ncomponents', 'npoints',
-                                        'cae', 'sae',
-                                        'contour', 'pra50', 'pra90', 'pra95',
-                                        'covt95', 'covt90', 'covt50'])
+                            properties=[])
 
 
     def where(self, phase, column):
