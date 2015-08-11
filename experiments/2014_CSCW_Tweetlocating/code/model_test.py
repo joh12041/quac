@@ -438,9 +438,9 @@ class Test(object):
             for property in properties:
                 counties[int(county[0])][property] = []
 
-        for bin in tweet_bins:
+        for region in tweet_bins:
             for property in properties:
-                tweet_bins[bin][property] = []
+                tweet_bins[region][property] = []
 
         count_matched = 0
         for tweet in tweets:
