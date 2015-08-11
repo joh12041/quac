@@ -67,7 +67,7 @@ def test_tweet(model, fields, tw):
     assert (tw.geom.srid == model.srid)
     if (tw.id % HEARTBEAT_INTERVAL == 0):
         l.debug('testing tweet id %d' % (tw.id))
-    r = Metrics_Tweet(tweet=tw, fields=fields, region_id = tw.region_id)
+    r = Metrics_Tweet(tweet=tw, fields=fields, region_id = tw.region_id, best_point = None)
     le = model.locate(tw.tokens, 0.50)
     r.location_estimate = le
     if (le is None):
@@ -89,6 +89,7 @@ def test_tweet(model, fields, tw):
         le.populate_pred_region(0.95)
         r.covt95 = int(le.coverst_p(tw.geom))
         r.pra95 = le.pred_area
+        r.best_point = loads('POINT ({0} {1})'.format(le.best_point.x, le.best_point.y))
         le.unprepare()  # save a bunch of memory
     return r
 
@@ -152,6 +153,7 @@ class Metrics_Tweet(Metrics):
         d = OrderedDict()
         d['tweet_id'] = self.tweet.id
         d['region_id'] = self.tweet.region_id
+        d['best_point'] = None
 
         for f in sorted(self.fields):
             d[f] = getattr(self.tweet, f)
@@ -421,33 +423,51 @@ class Test(object):
         return Test(self.start + duration, self.training_duration,
                     self.gap, self.testing_duration)
 
-    def map_tweets(self, tweets, outputname, cur, properties=[]):
+    def map_tweets(self, tweets, outputname, cur, properties=[], geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson"):
         ID_FIELD = "FIPS"
 
+        # Get SES attribute to bin tweet results by (on top of binning by counties)
         cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format('urban'))
 
-        tweet_bins = {'1' : {'count':0},
-                      '2' : {'count':0},
-                      '3' : {'count':0},
-                      '4' : {'count':0},
-                      '5' : {'count':0},
-                      '6' : {'count':0}}
+        tweet_bins = {'1' : {'count':0, 'within_county':0, 'within_100km':0},
+                      '2' : {'count':0, 'within_county':0, 'within_100km':0},
+                      '3' : {'count':0, 'within_county':0, 'within_100km':0},
+                      '4' : {'count':0, 'within_county':0, 'within_100km':0},
+                      '5' : {'count':0, 'within_county':0, 'within_100km':0},
+                      '6' : {'count':0, 'within_county':0, 'within_100km':0}}
+
+        # Initialize county bins for grouping tweet results
         counties = {}
         for county in cur:
-            counties[int(county[0])] = {'bin':str(county[1]), 'count':0}
+            counties[int(county[0])] = {'bin':str(county[1]), 'count':0, 'within_county':0, 'within_100km':0}
             for property in properties:
                 counties[int(county[0])][property] = []
 
+        # Initialize ses bins for grouping tweet results
         for region in tweet_bins:
             for property in properties:
                 tweet_bins[region][property] = []
 
+        # Load in county geometries for determining if the model's best point falls in the same county as the tweet
+        with open(geojsonfn, 'r') as fin:
+            county_geom = json.load(fin)
+        for county in county_geom['features']:
+            counties[int(county['properties'][ID_FIELD])]['shape'] = shape(county['geometry'])
+
+        # Loop through tweet results and add them to their respective county and ses bins
         count_matched = 0
         for tweet in tweets:
             if tweet.region_id in counties:
                 count_matched += 1
                 counties[tweet.region_id]['count'] += 1
                 tweet_bins[counties[tweet.region_id]['bin']]['count'] += 1
+                if hasattr(tweet, 'best_point'):  # do I need to count if there are tweets without a best point?
+                    if counties[tweet.region_id]['shape'].contains(tweet.best_point):
+                        counties[tweet.region_id]['within_county'] += 1
+                        tweet_bins[counties[tweet.region_id]['bin']]['within_county'] += 1
+                    if tweet.sae < 100:  # km
+                        counties[tweet.region_id]['within_100km'] += 1
+                        tweet_bins[counties[tweet.region_id]['bin']]['within_100km'] += 1
                 for property in properties:
                     counties[tweet.region_id][property].append(getattr(tweet, property))
                     tweet_bins[counties[tweet.region_id]['bin']][property].append(getattr(tweet, property))
