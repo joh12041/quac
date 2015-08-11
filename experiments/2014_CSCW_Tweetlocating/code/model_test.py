@@ -434,7 +434,7 @@ class Test(object):
                       '6' : {'count':0}}
         counties = {}
         for county in cur:
-            counties[int(county[0])] = {'bin':county[1], 'count':0}
+            counties[int(county[0])] = {'bin':str(county[1]), 'count':0}
             for property in properties:
                 counties[int(county[0])][property] = []
 
