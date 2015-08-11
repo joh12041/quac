@@ -214,7 +214,7 @@ class Test(object):
         (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu, args)
         self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
-                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson")
+                            cur=cur)
         exu = None if args.dup_users else tr_users
         (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu, args)
@@ -416,72 +416,67 @@ class Test(object):
         return Test(self.start + duration, self.training_duration,
                     self.gap, self.testing_duration)
 
-    def map_tweets(self, tweets, outputname, geojsonfn="USCounties_bare.geojson", properties=[]):
-        try:
-            with open(geojsonfn, 'r') as fin:
-                geography = json.load(fin)
-        except IOError as e:
-            l.warning(e)
-            l.warning("mapping will not occur because geojson {0} does not exist".format(geojsonfn))
-            return
-        except ValueError as e:
-            l.warning(e)
-            l.warning("mapping will not occur because geojson {0} is an invalid json object".format(geojsonfn))
-            return
-
+    def map_tweets(self, tweets, outputname, cur, properties=[]):
         ID_FIELD = "FIPS"
 
-        count_matched = 0
-        distribution = {}
-        for region in geography['features']:
-            distribution[int(region['properties'][ID_FIELD])] = {'count' : 0}
+        cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format('urban'))
+
+        tweet_bins = {'1' : {'count':0},
+                      '2' : {'count':0},
+                      '3' : {'count':0},
+                      '4' : {'count':0},
+                      '5' : {'count':0},
+                      '6' : {'count':0}}
+        counties = {}
+        for county in cur:
+            counties[int(county[0])] = {'bin':county[1], 'count':0}
             for property in properties:
-                distribution[int(region['properties'][ID_FIELD])][property] = []
+                counties[int(county[0])][property] = []
+
+        for bin in tweet_bins:
+            for property in properties:
+                tweet_bins[bin][property] = []
+
+        count_matched = 0
         for tweet in tweets:
-            for region in distribution:
-                if tweet.region_id == region:
-                    count_matched += 1
-                    distribution[region]['count'] += 1
-                    for property in properties:
-                        distribution[region][property].append(getattr(tweet, property))
+            if tweet.region_id in counties:
+                count_matched += 1
+                counties[tweet.region_id]['count'] += 1
+                tweet_bins[counties[tweet.region_id]['bin']]['count'] += 1
+                for property in properties:
+                    counties[tweet.region_id][property].append(getattr(tweet, property))
+                    tweet_bins[counties[tweet.region_id]['bin']][property].append(getattr(tweet, property))
         l.info('{0} out of {1} tweets matched via region_id.'.format(count_matched, len(tweets)))
 
-        for region in distribution:
+        for fips in counties:
             for property in properties:
-                if distribution[region]['count'] > 0:
-                    distribution[region]['mean_' + property] = np.mean(distribution[region][property])
-                    distribution[region]['med_' + property] = np.median(distribution[region][property])
-                    distribution[region]['1Q_' + property] = np.percentile(distribution[region][property], 25)
-                    distribution[region]['3Q_' + property] = np.percentile(distribution[region][property], 75)
-                    distribution[region]['sd_' + property] = np.std(distribution[region][property])
+                if counties[fips]['count'] > 0:
+                    counties[fips]['mean_' + property] = np.mean(counties[fips][property])
+                    counties[fips]['med_' + property] = np.median(counties[fips][property])
+                    counties[fips]['1Q_' + property] = np.percentile(counties[fips][property], 25)
+                    counties[fips]['3Q_' + property] = np.percentile(counties[fips][property], 75)
+                    counties[fips]['sd_' + property] = np.std(counties[fips][property])
                 else:
-                    distribution[region]['mean_' + property] = None
-                    distribution[region]['med_' + property] = None
-                    distribution[region]['1Q_' + property] = None
-                    distribution[region]['3Q_' + property] = None
-                    distribution[region]['sd_' + property] = None
+                    counties[fips]['mean_' + property] = None
+                    counties[fips]['med_' + property] = None
+                    counties[fips]['1Q_' + property] = None
+                    counties[fips]['3Q_' + property] = None
+                    counties[fips]['sd_' + property] = None
+        for region in tweet_bins:
+            for property in properties:
+                if tweet_bins[region]['count'] > 0:
+                    tweet_bins[region]['mean_' + property] = np.mean(tweet_bins[region][property])
+                    tweet_bins[region]['med_' + property] = np.median(tweet_bins[region][property])
+                    tweet_bins[region]['1Q_' + property] = np.percentile(tweet_bins[region][property], 25)
+                    tweet_bins[region]['3Q_' + property] = np.percentile(tweet_bins[region][property], 75)
+                    tweet_bins[region]['sd_' + property] = np.std(tweet_bins[region][property])
+                else:
+                    tweet_bins[region]['mean_' + property] = None
+                    tweet_bins[region]['med_' + property] = None
+                    tweet_bins[region]['1Q_' + property] = None
+                    tweet_bins[region]['3Q_' + property] = None
+                    tweet_bins[region]['sd_' + property] = None
 
-
-        # Backup method if region_ids are not populated at high rate, but this shouldn't be needed and complicates
-        #  the procedure so commented out for now. Would need to be updated to support properties_dict.
-        # if count < 0.95*len(tweets):  # loose metric for whether most of the region ids are populated
-        #     count_matched = 0
-        #     l.warning('switching to slower geojson containment method')
-        #     shapes = {}
-        #     for region in geography['features']:
-        #         distribution[region['properties'][ID_FIELD]] = 0
-        #         shapes[region['properties'][ID_FIELD]] = shape(region['geometry'])
-        #     for tweet in tweets:
-        #         try:
-        #             pt = loads('POINT ({0} {1})'.format(tweet.geom.x, tweet.geom.y))
-        #             for region in shapes:
-        #                 if shapes[region].contains(pt):
-        #                     distribution[region] += 1
-        #                     count_matched += 1
-        #                     continue
-        #         except:
-        #             continue
-        #     l.info('{0} out of {1} tweets matched via containment.'.format(count_matched, len(tweets)))
 
         with open(outputname, 'w') as fout:
             csvwriter = csv.writer(fout)
@@ -493,16 +488,32 @@ class Test(object):
                 header.append('3Q_' + property)
                 header.append('sd_' + property)
             csvwriter.writerow(header)
-            for region in distribution:
-                line = [region, distribution[region]['count']]
+            for fips in counties:
+                line = [fips, counties[fips]['count']]
                 for property in properties:
-                    line.append(distribution[region]['mean_' + property])
-                    line.append(distribution[region]['med_' + property])
-                    line.append(distribution[region]['1Q_' + property])
-                    line.append(distribution[region]['3Q_' + property])
-                    line.append(distribution[region]['sd_' + property])
+                    line.append(counties[fips]['mean_' + property])
+                    line.append(counties[fips]['med_' + property])
+                    line.append(counties[fips]['1Q_' + property])
+                    line.append(counties[fips]['3Q_' + property])
+                    line.append(counties[fips]['sd_' + property])
                 csvwriter.writerow(line)
-        l.info("Output geo stats to {0}".format(outputname))
+        l.info("Output county stats to {0}".format(outputname))
+
+        with open(outputname.replace(".csv","_byurban.csv"), 'w') as fout:
+            csvwriter = csv.writer(fout)
+            header[0] = 'urban_class'
+            csvwriter.writerow(header)
+            for region in tweet_bins:
+                line = [region, tweet_bins[region]['count']]
+                for property in properties:
+                    line.append(tweet_bins[region]['mean_' + property])
+                    line.append(tweet_bins[region]['med_' + property])
+                    line.append(tweet_bins[region]['1Q_' + property])
+                    line.append(tweet_bins[region]['3Q_' + property])
+                    line.append(tweet_bins[region]['sd_' + property])
+                csvwriter.writerow(line)
+        l.info("Output urban stats to {0}".format(outputname.replace(".csv","_byurban.csv")))
+
 
     def meanmedian(self, robj, validp, source, success_attr, attrs):
         'This is a convoluted method to compute means and medians.'
@@ -528,7 +539,7 @@ class Test(object):
         self.dump(dir_)
         self.shrink()
 
-    def summarize(self, outputdir=None):
+    def summarize(self, cur, outputdir=None):
         # Some metrics should be summed, others averaged, and others ignored.
         assert (self.attempted == 0 or len(self.results) > 0)
         self.summary = Metrics()
@@ -547,21 +558,21 @@ class Test(object):
                                        'cae', 'sae',
                                        'contour', 'pra50', 'pra90', 'pra95',
                                        'covt95', 'covt90', 'covt50', ])
-        self.summarize_by_geo('success_ct', outputdir)
+        self.summarize_by_geo('success_ct', outputdir, cur)
 
-    def summarize_by_geo(self, success_attr, outputdir):
+    def summarize_by_geo(self, success_attr, outputdir, cur):
         wins = list(filter(lambda x: getattr(x, success_attr), self.results))
         losses = list(filter(lambda x: getattr(x, success_attr) == 0, self.results))
         if wins:
             self.map_tweets(wins, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
-                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson",
+                            cur,
                             properties=['ntokens', 'ncomponents', 'npoints',
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
                                         'covt95', 'covt90', 'covt50'])
         if losses:
             self.map_tweets(losses, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
-                            geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson",
+                            cur,
                             properties=['ntokens', 'ncomponents', 'npoints',
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
@@ -650,7 +661,7 @@ class Test_Sequence(object):
             else:
                 l.info('starting test %d of %d: %s' % (i+1, len(self.schedule), t))
                 t.do_test(model_class, self.cur, self.args, i)
-            t.summarize(self.args.output_dir)
+            t.summarize(self.cur, self.args.output_dir)
             if (t.attempted):
                 if (self.args.profile_memory):
                     # We dump a memory profile here because it's the high water
