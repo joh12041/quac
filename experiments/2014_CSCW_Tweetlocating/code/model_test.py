@@ -576,7 +576,7 @@ class Test(object):
                                         'contour', 'pra50', 'pra90', 'pra95',
                                         'covt95', 'covt90', 'covt50'])
         if losses:
-            self.map_tweets(losses, "{0}/test_tweets_{1}.csv".format(outputdir, self.i),
+            self.map_tweets(losses, "{0}/test_failed_tweets_{1}.csv".format(outputdir, self.i),
                             cur,
                             properties=[])
 
