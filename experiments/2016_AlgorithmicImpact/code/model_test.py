@@ -447,7 +447,7 @@ class Test(object):
         # Initialize county bins for grouping tweet results
         counties = {}
         for county in cur:
-            counties[int(county[0])] = {'bin':str(county[1]), 'count':0, 'within_county':0, 'within_100km':0}
+            counties[int(county[0])] = {'bin':str(county[1]), 'count':0, 'within_county':0, 'within_100km':0, 'est_counties':{}}
             for property in properties:
                 counties[int(county[0])][property] = []
 
@@ -473,6 +473,15 @@ class Test(object):
                     if counties[tweet.region_id]['shape'].contains(tweet.best_point):
                         counties[tweet.region_id]['within_county'] += 1
                         tweet_bins[counties[tweet.region_id]['bin']]['within_county'] += 1
+                    else:
+                        for county in county_geom['features']:
+                            if county['shape'].contains(tweet.best_point):
+                                c = county['properties'][ID_FIELD]
+                                if c in counties[tweet.region_id]['est_counties']:
+                                    counties[tweet.region_id]['est_counties'][c] += 1
+                                else:
+                                    counties[tweet.region_id]['est_counties'][c] = 1
+                                break
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
                         tweet_bins[counties[tweet.region_id]['bin']]['within_100km'] += 1
@@ -545,6 +554,13 @@ class Test(object):
                     line.append(tweet_bins[region]['3Q_' + property])
                     line.append(tweet_bins[region]['sd_' + property])
                 csvwriter.writerow(line)
+
+        with open(outputname.replace(".csv","_wholookslikeSF.csv"), 'w') as fout:
+            csvwriter = csv.writer(fout)
+            header = [ID_FIELD, 'breakdown_of_actual_locations']
+            csvwriter.writerow(header)
+            for fips in counties:
+
         l.info("Output urban stats to {0}".format(outputname.replace(".csv","_byurban.csv")))
 
 
