@@ -557,9 +557,10 @@ class Test(object):
 
         with open(outputname.replace(".csv","_wholookslikeSF.csv"), 'w') as fout:
             csvwriter = csv.writer(fout)
-            header = [ID_FIELD, 'breakdown_of_actual_locations']
+            header = [ID_FIELD, 'breakdown_of_estimated_locations']
             csvwriter.writerow(header)
             for fips in counties:
+                csvwriter.writerow([fips, str(counties[fips]['est_counties'])])
 
         l.info("Output urban stats to {0}".format(outputname.replace(".csv","_byurban.csv")))
 
