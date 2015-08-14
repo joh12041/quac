@@ -332,12 +332,14 @@ class Test(object):
         return (tweets, users)
 
     def filter_geometry(self, tweets, ses, cur, how, limit):
-        potential_ses = ['urban', 'age', 'pop_pct', 'random', 'area_pct']  # these correspond with a PostgreSQL table column names
+        potential_ses = ['urban', 'age', 'pop_pct', 'random', 'area_pct', 'senate']  # these correspond with a PostgreSQL table column names
         if ses == 'urban':
             weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
-                          'urban' : {1:0.534, 2:0.372, 3:0.044, 4:0.020, 5:0.019, 6:0.013},
-                          'rural' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108}}
+                         'urban1' : {1:0.534, 2:0.372, 3:0.044, 4:0.020, 5:0.019, 6:0.013},
+                         'rural1' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108},
+                         'urbanf' : {1:0.420, 2:0.333, 3:0.250, 4:0.000, 5:0.000, 6:0.000},
+                         'ruralf' : {1:0.000, 2:0.000, 3:0.000, 4:0.250, 5:0.333, 6:0.420}}
         elif ses == 'age':
             weights = {'balanced' : {},
                        'expected' : {},
@@ -359,6 +361,12 @@ class Test(object):
         tweet_bins = {}
 
         if ses == 'pop_pct' or ses == 'area_pct':
+            counties = {}
+            for county in cur:
+                tweet_bins[int(county[0])] = []
+                weights[how][int(county[0])] = math.ceil(county[1]*limit)
+                counties[int(county[0])] = int(county[0])
+        elif ses == 'senate':
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
