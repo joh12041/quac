@@ -488,13 +488,12 @@ class Test(object):
                         counties[tweet.region_id]['within_county'] += 1
                         tweet_bins[counties[tweet.region_id]['bin']]['within_county'] += 1
                     else:
-                        for county in county_geom['features']:
-                            if county['shape'].contains(tweet.best_point):
-                                c = county['properties'][ID_FIELD]
-                                if c in counties[tweet.region_id]['est_counties']:
-                                    counties[tweet.region_id]['est_counties'][c] += 1
+                        for county in counties:
+                            if counties[county]['shape'].contains(tweet.best_point):
+                                if county in counties[tweet.region_id]['est_counties']:
+                                    counties[tweet.region_id]['est_counties'][county] += 1
                                 else:
-                                    counties[tweet.region_id]['est_counties'][c] = 1
+                                    counties[tweet.region_id]['est_counties'][county] = 1
                                 break
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
