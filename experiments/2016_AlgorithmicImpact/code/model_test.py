@@ -332,7 +332,7 @@ class Test(object):
         return (tweets, users)
 
     def filter_geometry(self, tweets, ses, cur, how, limit):
-        potential_ses = ['urban', 'age', 'pop_pct', 'random', 'area_pct', 'senate']  # these correspond with a PostgreSQL table column names
+        potential_ses = ['urban', 'pct15to34', 'pop_pct', 'random', 'area_pct', 'senate']  # these correspond with a PostgreSQL table column names
         if ses == 'urban':
             weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
@@ -340,11 +340,11 @@ class Test(object):
                          'rural1' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108},
                          'urbanf' : {1:0.420, 2:0.333, 3:0.250, 4:0.000, 5:0.000, 6:0.000},
                          'ruralf' : {1:0.000, 2:0.000, 3:0.000, 4:0.250, 5:0.333, 6:0.420}}
-        elif ses == 'age':
-            weights = {'balanced' : {},
-                       'expected' : {},
-                           'older': {},
-                         'younger': {}}
+        elif ses == 'pct15to34':
+            weights = {'balanced' : {'<20':0.021, '20-24':0.171, '24-27':0.282, '27-32':0.430, '32-40':0.083, '40+':0.014},
+                       'expected' : {'<20':0.008, '20-24':0.109, '24-27':0.248, '27-32':0.475, '32-40':0.133, '40+':0.027},
+                         'younger': {'<20':0.000, '20-24':0.000, '24-27':0.000, '27-32':0.000, '32-40':0.000, '40+':0.000},
+                           'older': {'<20':0.042, '20-24':0.232, '24-27':0.340, '27-32':0.340, '32-40':0.041, '40+':0.005}}
         else:
             weights = {how:{}}
         if ses not in potential_ses:
@@ -379,7 +379,21 @@ class Test(object):
 
             counties = {}
             for county in cur:
-                counties[int(county[0])] = county[1]
+                if ses == 'pct15to34':
+                    if county[1] < 20:
+                        counties[int(county[0])] = '<20'
+                    elif county[1] < 24:
+                        counties[int(county[0])] = '20-24'
+                    elif county[1] < 27:
+                        counties[int(county[0])] = '24-27'
+                    elif county[1] < 32:
+                        counties[int(county[0])] = '27-32'
+                    elif county[1] < 40:
+                        counties[int(county[0])] = '32-40'
+                    else:
+                        counties[int(county[0])] = '40+'
+                else:
+                    counties[int(county[0])] = county[1]
 
         for tweet in tweets:
             if tweet.region_id in counties:
@@ -447,7 +461,7 @@ class Test(object):
         # Initialize county bins for grouping tweet results
         counties = {}
         for county in cur:
-            counties[int(county[0])] = {'bin':str(county[1]), 'count':0, 'within_county':0, 'within_100km':0}
+            counties[int(county[0])] = {'bin':str(county[1]), 'count':0, 'within_county':0, 'within_100km':0, 'est_counties':{}}
             for property in properties:
                 counties[int(county[0])][property] = []
 
@@ -473,6 +487,15 @@ class Test(object):
                     if counties[tweet.region_id]['shape'].contains(tweet.best_point):
                         counties[tweet.region_id]['within_county'] += 1
                         tweet_bins[counties[tweet.region_id]['bin']]['within_county'] += 1
+                    else:
+                        for county in county_geom['features']:
+                            if county['shape'].contains(tweet.best_point):
+                                c = county['properties'][ID_FIELD]
+                                if c in counties[tweet.region_id]['est_counties']:
+                                    counties[tweet.region_id]['est_counties'][c] += 1
+                                else:
+                                    counties[tweet.region_id]['est_counties'][c] = 1
+                                break
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
                         tweet_bins[counties[tweet.region_id]['bin']]['within_100km'] += 1
@@ -545,6 +568,14 @@ class Test(object):
                     line.append(tweet_bins[region]['3Q_' + property])
                     line.append(tweet_bins[region]['sd_' + property])
                 csvwriter.writerow(line)
+
+        with open(outputname.replace(".csv","_wholookslikeSF.csv"), 'w') as fout:
+            csvwriter = csv.writer(fout)
+            header = [ID_FIELD, 'breakdown_of_estimated_locations']
+            csvwriter.writerow(header)
+            for fips in counties:
+                csvwriter.writerow([fips, str(counties[fips]['est_counties'])])
+
         l.info("Output urban stats to {0}".format(outputname.replace(".csv","_byurban.csv")))
 
 
