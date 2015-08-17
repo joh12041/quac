@@ -11,15 +11,15 @@ model-test \
     --test-tweet-limit 120000 \
     --start $START \
     --end $END \
-    --training P8D \
-    --testing P18D \
-    --stride P26D \
+    --training P18D \
+    --testing P10D \
+    --stride P28D \
     --cores $CORE_CT \
     --skip-small-tests 0 \
     --verbose \
-    --ses random \
-    --how_filter expected \
-    $GEODB $JOBDIR/pop_random_120k
+    --ses urban \
+    --how_filter urbanf \
+    $GEODB $JOBDIR/pop_onlyurban_120k
 
 model-test \
     --min-instances 3 \
@@ -28,13 +28,13 @@ model-test \
     --test-tweet-limit 120000 \
     --start $START \
     --end $END \
-    --training P8D \
-    --testing P18D \
-    --stride P26D \
+    --training P18D \
+    --testing P10D \
+    --stride P28D \
     --cores $CORE_CT \
     --skip-small-tests 0 \
     --verbose \
-    --ses pop_pct \
-    --how_filter balanced \
-    $GEODB $JOBDIR/pop_balanced_120k
+    --ses urban \
+    --how_filter ruralf \
+    $GEODB $JOBDIR/pop_onlyrural_120k
 
