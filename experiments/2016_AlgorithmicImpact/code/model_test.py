@@ -445,23 +445,50 @@ class Test(object):
         return Test(self.start + duration, self.training_duration,
                     self.gap, self.testing_duration)
 
-    def map_tweets(self, tweets, outputname, cur, properties=[], geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson"):
+    def map_tweets(self, tweets, outputname, cur, properties=[],
+                   geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson", ses=''):
         ID_FIELD = "FIPS"
 
         # Get SES attribute to bin tweet results by (on top of binning by counties)
-        cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format('urban'))
+        if ses == 'pct15to34':
+            cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format(ses))
+        else:
+            cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format('urban'))
 
-        tweet_bins = {'1' : {'count':0, 'within_county':0, 'within_100km':0},
-                      '2' : {'count':0, 'within_county':0, 'within_100km':0},
-                      '3' : {'count':0, 'within_county':0, 'within_100km':0},
-                      '4' : {'count':0, 'within_county':0, 'within_100km':0},
-                      '5' : {'count':0, 'within_county':0, 'within_100km':0},
-                      '6' : {'count':0, 'within_county':0, 'within_100km':0}}
+        if ses == 'pct15to34':
+            tweet_bins = {  '<20': {'count':0, 'within_county':0, 'within_100km':0},
+                          '20-24': {'count':0, 'within_county':0, 'within_100km':0},
+                          '24-27': {'count':0, 'within_county':0, 'within_100km':0},
+                          '27-32': {'count':0, 'within_county':0, 'within_100km':0},
+                          '32-40': {'count':0, 'within_county':0, 'within_100km':0},
+                            '40+': {'count':0, 'within_county':0, 'within_100km':0}}
+        else:
+            tweet_bins = {'1' : {'count':0, 'within_county':0, 'within_100km':0},
+                          '2' : {'count':0, 'within_county':0, 'within_100km':0},
+                          '3' : {'count':0, 'within_county':0, 'within_100km':0},
+                          '4' : {'count':0, 'within_county':0, 'within_100km':0},
+                          '5' : {'count':0, 'within_county':0, 'within_100km':0},
+                          '6' : {'count':0, 'within_county':0, 'within_100km':0}}
 
         # Initialize county bins for grouping tweet results
         counties = {}
         for county in cur:
-            counties[int(county[0])] = {'bin':str(county[1]), 'count':0, 'within_county':0, 'within_100km':0, 'est_counties':{}}
+            counties[int(county[0])] = {'count':0, 'within_county':0, 'within_100km':0, 'est_counties':{}}
+            if ses == 'pct15to34':
+                if county[1] < 20:
+                    counties[int(county[0])]['bin'] = '<20'
+                elif county[1] < 24:
+                    counties[int(county[0])]['bin'] = '20-24'
+                elif county[1] < 27:
+                    counties[int(county[0])]['bin'] = '24-27'
+                elif county[1] < 32:
+                    counties[int(county[0])]['bin'] = '27-32'
+                elif county[1] < 40:
+                    counties[int(county[0])]['bin'] = '32-40'
+                else:
+                    counties[int(county[0])]['bin'] = '40+'
+            else:
+                counties[int(county[0])]['bin'] = str(county[1])
             for property in properties:
                 counties[int(county[0])][property] = []
 
@@ -602,7 +629,7 @@ class Test(object):
         self.dump(dir_)
         self.shrink()
 
-    def summarize(self, cur, outputdir=None):
+    def summarize(self, cur, outputdir=None, ses=''):
         # Some metrics should be summed, others averaged, and others ignored.
         assert (self.attempted == 0 or len(self.results) > 0)
         self.summary = Metrics()
@@ -621,9 +648,9 @@ class Test(object):
                                        'cae', 'sae',
                                        'contour', 'pra50', 'pra90', 'pra95',
                                        'covt95', 'covt90', 'covt50', ])
-        self.summarize_by_geo('success_ct', outputdir, cur)
+        self.summarize_by_geo('success_ct', outputdir, cur, ses)
 
-    def summarize_by_geo(self, success_attr, outputdir, cur):
+    def summarize_by_geo(self, success_attr, outputdir, cur, ses):
         wins = list(filter(lambda x: getattr(x, success_attr), self.results))
         losses = list(filter(lambda x: getattr(x, success_attr) == 0, self.results))
         if wins:
@@ -632,11 +659,13 @@ class Test(object):
                             properties=['ntokens', 'ncomponents', 'npoints',
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
-                                        'covt95', 'covt90', 'covt50'])
+                                        'covt95', 'covt90', 'covt50'],
+                            ses)
         if losses:
             self.map_tweets(losses, "{0}/test_failed_tweets_{1}.csv".format(outputdir, self.i),
                             cur,
-                            properties=[])
+                            properties=[],
+                            ses)
 
 
     def where(self, phase, column):
@@ -721,7 +750,7 @@ class Test_Sequence(object):
             else:
                 l.info('starting test %d of %d: %s' % (i+1, len(self.schedule), t))
                 t.do_test(model_class, self.cur, self.args, i)
-            t.summarize(self.cur, self.args.output_dir)
+            t.summarize(self.cur, self.args.output_dir, self.args.ses)
             if (t.attempted):
                 if (self.args.profile_memory):
                     # We dump a memory profile here because it's the high water
