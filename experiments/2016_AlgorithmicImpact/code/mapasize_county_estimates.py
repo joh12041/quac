@@ -16,6 +16,10 @@ def main():
                     help="CSV file output by model_test (e.g. test_tweets_0.csv) with number of tweets correctly guessed in the county.")
     ap.add_argument('output_csv',
                     help='CSV file to output the counts matrix (# of counties x # of counties)')
+    ap.add_argument('--include_correct_guesses',
+                    action='store_true',
+                    default=True,
+                    help="Process csv_with_number_correct_guesses (T) or just leave those cells as None (F).")
 
     args = ap.parse_args()
 
@@ -37,11 +41,12 @@ def main():
             estimates = ast.literal_eval(line[1])
             for estimate in estimates:
                 rows[estimate][int(line[0])] = estimates[estimate]
-    with open(args.csv_with_number_correct_guesses, 'r') as fin:
-        csvreader = csv.reader(fin)
-        assert next(csvreader)[:3] == ['FIPS','count_tweets','within_county']
-        for line in csvreader:
-            rows[int(line[0])][int(line[0])] = int(line[2])
+    if args.include_correct_guesses:
+        with open(args.csv_with_number_correct_guesses, 'r') as fin:
+            csvreader = csv.reader(fin)
+            assert next(csvreader)[:3] == ['FIPS','count_tweets','within_county']
+            for line in csvreader:
+                rows[int(line[0])][int(line[0])] = int(line[2])
 
     columns.sort()
     columns = ['county_fips'] + columns
