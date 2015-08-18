@@ -21,28 +21,30 @@ def main():
     with open(args.counties_geojson, 'r') as fin:
         counties_gj = json.load(fin)
 
-    data = {}
+    columns = []
+    for county in counties_gj['features']:
+        columns.append(int(county['properties']['FIPS']))
+    del(counties_gj)
+
+    rows = {}
+    for fips in columns:
+        rows[fips] = {'county_fips' : fips}
     with open(args.tweet_estimates_by_county, 'r') as fin:
         csvreader = csv.reader(fin)
         assert next(csvreader) == ['FIPS','breakdown_of_estimated_locations']
         for line in csvreader:
             estimates = ast.literal_eval(line[1])
-            data[line[0]] = {'county_fips' : line[0]}
             for estimate in estimates:
-                data[line[0]][estimate] = estimates[estimate]
+                rows[estimate][int(line[0])] = estimates[estimate]
 
-    columns = []
-    for county in counties_gj['features']:
-        columns.append(int(county['properties']['FIPS']))
-    del(counties_gj)
     columns.sort()
     columns = ['county_fips'] + columns
 
     with open(args.output_csv, 'w') as fout:
         csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
         csvwriter.writeheader()
-        for fips in data:
-            csvwriter.writerow(data[fips])
+        for fips in rows:
+            csvwriter.writerow(rows[fips])
 
 
 if __name__ == "__main__":
