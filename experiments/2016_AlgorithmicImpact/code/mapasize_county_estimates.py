@@ -47,6 +47,9 @@ def main():
             assert next(csvreader)[:3] == ['FIPS','count_tweets','within_county']
             for line in csvreader:
                 rows[int(line[0])][int(line[0])] = int(line[2])
+    else:
+        for fips in rows:
+            rows[fips][fips] = 0
 
     columns.sort()
     columns = ['county_fips'] + columns
