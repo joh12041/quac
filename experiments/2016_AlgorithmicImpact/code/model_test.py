@@ -660,12 +660,12 @@ class Test(object):
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
                                         'covt95', 'covt90', 'covt50'],
-                            ses)
+                            ses=ses)
         if losses:
             self.map_tweets(losses, "{0}/test_failed_tweets_{1}.csv".format(outputdir, self.i),
                             cur,
                             properties=[],
-                            ses)
+                            ses=ses)
 
 
     def where(self, phase, column):
