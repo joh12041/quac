@@ -514,6 +514,13 @@ class Test(object):
                     if counties[tweet.region_id]['shape'].contains(tweet.best_point):
                         counties[tweet.region_id]['within_county'] += 1
                         tweet_bins[counties[tweet.region_id]['bin']]['within_county'] += 1
+                        if tweet.region_id in counties[tweet.region_id]['est_counties']:
+                            counties[tweet.region_id]['est_counties'][tweet.region_id]['count'] += 1
+                            counties[tweet.region_id]['est_counties'][tweet.region_id]['dcae'].append(tweet.cae)
+                            counties[tweet.region_id]['est_counties'][tweet.region_id]['dsae'].append(tweet.sae)
+                        else:
+                            counties[tweet.region_id]['est_counties'][tweet.region_id] = {'count':1, 'dcae':[tweet.cae] ,'dsae':[tweet.sae]}
+
                     else:
                         for county in counties:
                             if counties[county]['shape'].contains(tweet.best_point):

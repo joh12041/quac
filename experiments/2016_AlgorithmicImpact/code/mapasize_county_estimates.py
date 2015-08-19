@@ -12,8 +12,6 @@ def main():
                 help='GeoJSON file containing the counties that will be each row')
     ap.add_argument('tweet_estimates_by_county',
                     help='CSV file (*_wholookslikeSF.csv) containing tweet estimates by county as output by model_test.py')
-    ap.add_argument('csv_with_number_correct_guesses',
-                    help="CSV file output by model_test (e.g. test_tweets_0.csv) with number of tweets correctly guessed in the county.")
     ap.add_argument('output_csv',
                     help='CSV file to output the counts matrix (# of counties x # of counties)')
     ap.add_argument('--include_correct_guesses',
@@ -41,13 +39,8 @@ def main():
             estimates = ast.literal_eval(line[1])
             for estimate in estimates:
                 rows[estimate][int(line[0])] = estimates[estimate]['count']
-    if args.include_correct_guesses:
-        with open(args.csv_with_number_correct_guesses, 'r') as fin:
-            csvreader = csv.reader(fin)
-            assert next(csvreader)[:3] == ['FIPS','count_tweets','within_county']
-            for line in csvreader:
-                rows[int(line[0])][int(line[0])] = int(line[2])
-    else:
+    if not args.include_correct_guesses:
+        # Zero out intercept on matrix
         for fips in rows:
             rows[fips][fips] = 0
 
