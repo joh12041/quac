@@ -216,7 +216,7 @@ class Test(object):
         (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu, args)
         self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
-                            cur=cur)
+                            cur=cur,ses=args.ses)
         exu = None if args.dup_users else tr_users
         (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu, args)
@@ -518,9 +518,11 @@ class Test(object):
                         for county in counties:
                             if counties[county]['shape'].contains(tweet.best_point):
                                 if county in counties[tweet.region_id]['est_counties']:
-                                    counties[tweet.region_id]['est_counties'][county] += 1
+                                    counties[tweet.region_id]['est_counties'][county]['count'] += 1
+                                    counties[tweet.region_id]['est_counties'][county]['dcae'].append(tweet.cae)
+                                    counties[tweet.region_id]['est_counties'][county]['dsae'].append(tweet.sae)
                                 else:
-                                    counties[tweet.region_id]['est_counties'][county] = 1
+                                    counties[tweet.region_id]['est_counties'][county] = {'count':1, 'dcae':[tweet.cae] ,'dsae':[tweet.sae]}
                                 break
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
@@ -600,6 +602,11 @@ class Test(object):
             header = [ID_FIELD, 'breakdown_of_estimated_locations']
             csvwriter.writerow(header)
             for fips in counties:
+                for county in counties[fips]['est_counties']:
+                    counties[fips]['est_counties'][county]['sdcae'] = np.std(counties[fips]['est_counties'][county]['dcae'])
+                    counties[fips]['est_counties'][county]['sdsae'] = np.std(counties[fips]['est_counties'][county]['dsae'])
+                    counties[fips]['est_counties'][county]['dcae'] = np.median(counties[fips]['est_counties'][county]['dcae'])
+                    counties[fips]['est_counties'][county]['dsae'] = np.median(counties[fips]['est_counties'][county]['dsae'])
                 csvwriter.writerow([fips, str(counties[fips]['est_counties'])])
 
         l.info("Output urban stats to {0}".format(outputname.replace(".csv","_byurban.csv")))

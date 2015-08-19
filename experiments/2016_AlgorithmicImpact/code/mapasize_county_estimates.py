@@ -40,7 +40,7 @@ def main():
         for line in csvreader:
             estimates = ast.literal_eval(line[1])
             for estimate in estimates:
-                rows[estimate][int(line[0])] = estimates[estimate]
+                rows[estimate][int(line[0])] = estimates[estimate]['count']
     if args.include_correct_guesses:
         with open(args.csv_with_number_correct_guesses, 'r') as fin:
             csvreader = csv.reader(fin)
