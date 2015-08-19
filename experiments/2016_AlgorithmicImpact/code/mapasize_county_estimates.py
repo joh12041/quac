@@ -38,7 +38,11 @@ def main():
         for line in csvreader:
             estimates = ast.literal_eval(line[1])
             for estimate in estimates:
-                rows[estimate][int(line[0])] = estimates[estimate]['count']
+                rows[estimate][int(line[0])] = {'count' : estimates[estimate]['count'],
+                                                 'dcae' : estimates[estimate]['dcae'],
+                                                 'dsae' : estimates[estimate]['dsae'],
+                                                'sdcae' : estimates[estimate]['sdcae'],
+                                                'sdsae' : estimates[estimate]['sdsae']}
     if not args.include_correct_guesses:
         # Zero out intercept on matrix
         for fips in rows:
@@ -47,11 +51,32 @@ def main():
     columns.sort()
     columns = ['county_fips'] + columns
 
-    with open(args.output_csv, 'w') as fout:
+    with open(args.output_csv.replace('.csv','_count.csv'), 'w') as fout:
         csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
         csvwriter.writeheader()
         for fips in rows:
-            csvwriter.writerow(rows[fips])
+            csvwriter.writerow(rows[fips]['count'])
+    with open(args.output_csv.replace('.csv','_dcae.csv'), 'w') as fout:
+        csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
+        csvwriter.writeheader()
+        for fips in rows:
+            csvwriter.writerow(rows[fips]['dcae'])
+    with open(args.output_csv.replace('.csv','_dsae.csv'), 'w') as fout:
+        csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
+        csvwriter.writeheader()
+        for fips in rows:
+            csvwriter.writerow(rows[fips]['dsae'])
+    with open(args.output_csv.replace('.csv','_sdcae.csv'), 'w') as fout:
+        csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
+        csvwriter.writeheader()
+        for fips in rows:
+            csvwriter.writerow(rows[fips]['sdcae'])
+    with open(args.output_csv.replace('.csv','_sdsae.csv'), 'w') as fout:
+        csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
+        csvwriter.writeheader()
+        for fips in rows:
+            csvwriter.writerow(rows[fips]['sdsae'])
+
 
 
 if __name__ == "__main__":
