@@ -21,36 +21,43 @@ def main():
 
     args = ap.parse_args()
 
+    # Use GeoJSON to get FIPS for counties that I am interested in
     with open(args.counties_geojson, 'r') as fin:
         counties_gj = json.load(fin)
 
+    # column headers in final CSVs
     columns = []
     for county in counties_gj['features']:
         columns.append(int(county['properties']['FIPS']))
     del(counties_gj)
 
+    # row names in final CSVs - same as columns
     rows = {}
     for fips in columns:
         rows[fips] = {'county_fips' : fips}
+
+    # Parse out county estimate dictionaries
     with open(args.tweet_estimates_by_county, 'r') as fin:
         csvreader = csv.reader(fin)
         assert next(csvreader) == ['FIPS','breakdown_of_estimated_locations']
         for line in csvreader:
             estimates = ast.literal_eval(line[1])
             for estimate in estimates:
+                # This could be accomplished with '... = estimates[estimate]' but I prefer to see the expected keys
                 rows[estimate][int(line[0])] = {'count' : estimates[estimate]['count'],
                                                  'dcae' : estimates[estimate]['dcae'],
                                                  'dsae' : estimates[estimate]['dsae'],
                                                 'sdcae' : estimates[estimate]['sdcae'],
                                                 'sdsae' : estimates[estimate]['sdsae']}
     if not args.include_correct_guesses:
-        # Zero out intercept on matrix
+        # Zero out intercept on matrix to simplify mapping because the intercept is generally way greater than the other values
         for fips in rows:
             rows[fips][fips] = 0
 
     columns.sort()
     columns = ['county_fips'] + columns
 
+    # Write each statistic to its own file
     with open(args.output_csv.replace('.csv','_count.csv'), 'w') as fout:
         csvwriter = csv.DictWriter(fout, fieldnames=columns, restval=None)
         csvwriter.writeheader()

@@ -361,18 +361,21 @@ class Test(object):
         tweet_bins = {}
 
         if ses == 'pop_pct' or ses == 'area_pct':
+            # Set expected tweets per county based on proportions from PostgreSQL table
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
                 weights[how][int(county[0])] = math.ceil(county[1]*limit)
                 counties[int(county[0])] = int(county[0])
         elif ses == 'senate':
+            # TODO: Create this - should set equal tweets per county
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
                 weights[how][int(county[0])] = math.ceil(county[1]*limit)
                 counties[int(county[0])] = int(county[0])
         else:
+            # Set limit on a bin basis, not county
             for category in weights[how]:
                 weights[how][category] = math.ceil(weights[how][category] * limit)
                 tweet_bins[category] = []
