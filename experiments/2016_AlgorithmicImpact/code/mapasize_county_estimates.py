@@ -34,7 +34,11 @@ def main():
     # row names in final CSVs - same as columns
     rows = {}
     for fips in columns:
-        rows[fips] = {'county_fips' : fips}
+        rows[fips] = {'count': {'county_fips' : fips},
+                      'dcae' : {'county_fips' : fips},
+                      'dsae' : {'county_fips' : fips},
+                      'sdcae' : {'county_fips' : fips},
+                      'sdsae' : {'county_fips' : fips},}
 
     # Parse out county estimate dictionaries
     with open(args.tweet_estimates_by_county, 'r') as fin:
@@ -43,16 +47,17 @@ def main():
         for line in csvreader:
             estimates = ast.literal_eval(line[1])
             for estimate in estimates:
-                # This could be accomplished with '... = estimates[estimate]' but I prefer to see the expected keys
-                rows[estimate][int(line[0])] = {'count' : estimates[estimate]['count'],
-                                                 'dcae' : estimates[estimate]['dcae'],
-                                                 'dsae' : estimates[estimate]['dsae'],
-                                                'sdcae' : estimates[estimate]['sdcae'],
-                                                'sdsae' : estimates[estimate]['sdsae']}
+                rows[estimate]['count'][int(line[0])] = estimates[estimate]['count']
+                rows[estimate]['dcae'][int(line[0])] = estimates[estimate]['dcae']
+                rows[estimate]['dsae'][int(line[0])] = estimates[estimate]['dsae']
+                rows[estimate]['sdcae'][int(line[0])] = estimates[estimate]['sdcae']
+                rows[estimate]['sdsae'][int(line[0])] = estimates[estimate]['sdsae']
+
     if not args.include_correct_guesses:
         # Zero out intercept on matrix to simplify mapping because the intercept is generally way greater than the other values
         for fips in rows:
-            rows[fips][fips] = 0
+            for property in ['count','dcae','dsae','sdcae','sdsae']:
+                rows[fips][property][fips] = 0
 
     columns.sort()
     columns = ['county_fips'] + columns
