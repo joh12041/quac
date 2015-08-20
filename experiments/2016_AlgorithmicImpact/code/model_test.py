@@ -315,7 +315,7 @@ class Test(object):
                                      and tw.user_screen_name not in users)):
                 users.add(tw.user_screen_name)
                 tweets.append(tw)
-        if phase == "training":
+        if phase == "training" or args.filter_testing:
             tweets = self.filter_geometry(tweets, args.ses, cur, args.how_filter, 30000)  # downsample to 30000 per Reid's paper
             users = set()
             for tw in tweets:
