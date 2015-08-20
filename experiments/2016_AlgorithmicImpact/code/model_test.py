@@ -234,7 +234,10 @@ class Test(object):
         self.train_token_ct = len(tr_tokens)
         # downsample test tweets
         if (len(te_tweets) > args.test_tweet_limit):
-            te_tweets = self.filter_geometry(te_tweets, 'random', cur, '', args.test_tweet_limit)
+            if args.filter_testing:
+                te_tweets = self.filter_geometry(te_tweets, args.ses, cur, args.how_filter, args.test_tweet_limit)
+            else:
+                te_tweets = self.filter_geometry(te_tweets, 'random', cur, '', args.test_tweet_limit)
             l.info('sampled %d test tweets per --test-tweet-limit'
                    % (args.test_tweet_limit))
         self.test_tweet_ct = len(te_tweets)
@@ -315,7 +318,7 @@ class Test(object):
                                      and tw.user_screen_name not in users)):
                 users.add(tw.user_screen_name)
                 tweets.append(tw)
-        if phase == "training" or args.filter_testing:
+        if phase == "training":
             tweets = self.filter_geometry(tweets, args.ses, cur, args.how_filter, 30000)  # downsample to 30000 per Reid's paper
             users = set()
             for tw in tweets:
