@@ -216,7 +216,7 @@ class Test(object):
         (tr_tweets, tr_users) = self.fetch(cur, args.srid, 'training', tzer,
                                            args.fields, args.unify_fields, exu, args)
         self.map_tweets(tr_tweets, "{0}/training_tweets_{1}.csv".format(args.output_dir, i),
-                            cur=cur,ses=args.ses)
+                            cur=cur)
         exu = None if args.dup_users else tr_users
         (te_tweets, _) = self.fetch(cur, args.srid, 'testing', tzer,
                                     args.fields, args.unify_fields, exu, args)
@@ -375,7 +375,7 @@ class Test(object):
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
-                weights[how][int(county[0])] = math.ceil(county[1]*limit)
+                weights[how][int(county[0])] = math.ceil(limit / 3109)  # equal distribution across counties
                 counties[int(county[0])] = int(county[0])
         else:
             # Set limit on a bin basis, not county
@@ -452,56 +452,58 @@ class Test(object):
                     self.gap, self.testing_duration)
 
     def map_tweets(self, tweets, outputname, cur, properties=[],
-                   geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson", ses=''):
+                   geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson",
+                   gender=False, race=False):
         ID_FIELD = "FIPS"
 
-        # Get SES attribute to bin tweet results by (on top of binning by counties)
-        if ses == 'pct15to34':
-            cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format(ses))
-        else:
-            cur.execute("SELECT fips as fips, {0} as {0} from quac_ses".format('urban'))
+        bins = {}
+        bins['age'] = {  '<20': {'count':0, 'within_county':0, 'within_100km':0},
+                       '20-24': {'count':0, 'within_county':0, 'within_100km':0},
+                       '24-27': {'count':0, 'within_county':0, 'within_100km':0},
+                       '27-32': {'count':0, 'within_county':0, 'within_100km':0},
+                       '32-40': {'count':0, 'within_county':0, 'within_100km':0},
+                         '40+': {'count':0, 'within_county':0, 'within_100km':0}}
+        bins['urban'] = {'1' : {'count':0, 'within_county':0, 'within_100km':0},
+                         '2' : {'count':0, 'within_county':0, 'within_100km':0},
+                         '3' : {'count':0, 'within_county':0, 'within_100km':0},
+                         '4' : {'count':0, 'within_county':0, 'within_100km':0},
+                         '5' : {'count':0, 'within_county':0, 'within_100km':0},
+                         '6' : {'count':0, 'within_county':0, 'within_100km':0}}
+        bins['gender'] = {'m' : {'count':0, 'within_county':0, 'within_100km':0},
+                          'f' : {'count':0, 'within_county':0, 'within_100km':0},
+                          'n' : {'count':0, 'within_county':0, 'within_100km':0}}
+        bins['race'] = {'b' : {'count':0, 'within_county':0, 'within_100km':0},
+                        'l' : {'count':0, 'within_county':0, 'within_100km':0},
+                        'n' : {'count':0, 'within_county':0, 'within_100km':0}}
 
-        if ses == 'pct15to34':
-            tweet_bins = {  '<20': {'count':0, 'within_county':0, 'within_100km':0},
-                          '20-24': {'count':0, 'within_county':0, 'within_100km':0},
-                          '24-27': {'count':0, 'within_county':0, 'within_100km':0},
-                          '27-32': {'count':0, 'within_county':0, 'within_100km':0},
-                          '32-40': {'count':0, 'within_county':0, 'within_100km':0},
-                            '40+': {'count':0, 'within_county':0, 'within_100km':0}}
-        else:
-            tweet_bins = {'1' : {'count':0, 'within_county':0, 'within_100km':0},
-                          '2' : {'count':0, 'within_county':0, 'within_100km':0},
-                          '3' : {'count':0, 'within_county':0, 'within_100km':0},
-                          '4' : {'count':0, 'within_county':0, 'within_100km':0},
-                          '5' : {'count':0, 'within_county':0, 'within_100km':0},
-                          '6' : {'count':0, 'within_county':0, 'within_100km':0}}
+        # Get SES attribute to bin tweet results by (on top of binning by counties)
+        cur.execute("SELECT fips as fips, {0} as age, {1} as urban from quac_ses".format('pct15to34', 'urban'))
 
         # Initialize county bins for grouping tweet results
         counties = {}
         for county in cur:
             counties[int(county[0])] = {'count':0, 'within_county':0, 'within_100km':0, 'est_counties':{}}
-            if ses == 'pct15to34':
-                if county[1] < 20:
-                    counties[int(county[0])]['bin'] = '<20'
-                elif county[1] < 24:
-                    counties[int(county[0])]['bin'] = '20-24'
-                elif county[1] < 27:
-                    counties[int(county[0])]['bin'] = '24-27'
-                elif county[1] < 32:
-                    counties[int(county[0])]['bin'] = '27-32'
-                elif county[1] < 40:
-                    counties[int(county[0])]['bin'] = '32-40'
-                else:
-                    counties[int(county[0])]['bin'] = '40+'
+            if county[1] < 20:
+                counties[int(county[0])]['age'] = '<20'
+            elif county[1] < 24:
+                counties[int(county[0])]['age'] = '20-24'
+            elif county[1] < 27:
+                counties[int(county[0])]['age'] = '24-27'
+            elif county[1] < 32:
+                counties[int(county[0])]['age'] = '27-32'
+            elif county[1] < 40:
+                counties[int(county[0])]['age'] = '32-40'
             else:
-                counties[int(county[0])]['bin'] = str(county[1])
+                counties[int(county[0])]['age'] = '40+'
+            counties[int(county[0])]['urban'] = str(county[2])
             for property in properties:
                 counties[int(county[0])][property] = []
 
         # Initialize ses bins for grouping tweet results
-        for region in tweet_bins:
-            for property in properties:
-                tweet_bins[region][property] = []
+        for ses in bins.values():
+            for region in ses:
+                for property in properties:
+                    ses[region][property] = []
 
         # Load in county geometries for determining if the model's best point falls in the same county as the tweet
         with open(geojsonfn, 'r') as fin:
@@ -515,11 +517,13 @@ class Test(object):
             if tweet.region_id in counties:
                 count_matched += 1
                 counties[tweet.region_id]['count'] += 1
-                tweet_bins[counties[tweet.region_id]['bin']]['count'] += 1
+                for ses in bins:
+                    bins[ses][counties[tweet.region_id][ses]]['count'] += 1
                 if hasattr(tweet, 'best_point'):  # do I need to count if there are tweets without a best point?
                     if counties[tweet.region_id]['shape'].contains(tweet.best_point):
                         counties[tweet.region_id]['within_county'] += 1
-                        tweet_bins[counties[tweet.region_id]['bin']]['within_county'] += 1
+                        for ses in bins:
+                            bins[ses][counties[tweet.region_id][ses]]['within_county'] += 1
                         if tweet.region_id in counties[tweet.region_id]['est_counties']:
                             counties[tweet.region_id]['est_counties'][tweet.region_id]['count'] += 1
                             counties[tweet.region_id]['est_counties'][tweet.region_id]['dcae'].append(tweet.cae)
@@ -539,10 +543,12 @@ class Test(object):
                                 break
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
-                        tweet_bins[counties[tweet.region_id]['bin']]['within_100km'] += 1
+                        for ses in bins:
+                            bins[ses][counties[tweet.region_id][ses]]['within_100km'] += 1
                 for property in properties:
                     counties[tweet.region_id][property].append(getattr(tweet, property))
-                    tweet_bins[counties[tweet.region_id]['bin']][property].append(getattr(tweet, property))
+                    for ses in bins:
+                        bins[ses][counties[tweet.region_id][ses]][property].append(getattr(tweet, property))
         l.info('{0} out of {1} tweets matched via region_id.'.format(count_matched, len(tweets)))
 
         for fips in counties:
@@ -559,20 +565,21 @@ class Test(object):
                     counties[fips]['1Q_' + property] = None
                     counties[fips]['3Q_' + property] = None
                     counties[fips]['sd_' + property] = None
-        for region in tweet_bins:
-            for property in properties:
-                if tweet_bins[region]['count'] > 0:
-                    tweet_bins[region]['mean_' + property] = np.mean(tweet_bins[region][property])
-                    tweet_bins[region]['med_' + property] = np.median(tweet_bins[region][property])
-                    tweet_bins[region]['1Q_' + property] = np.percentile(tweet_bins[region][property], 25)
-                    tweet_bins[region]['3Q_' + property] = np.percentile(tweet_bins[region][property], 75)
-                    tweet_bins[region]['sd_' + property] = np.std(tweet_bins[region][property])
-                else:
-                    tweet_bins[region]['mean_' + property] = None
-                    tweet_bins[region]['med_' + property] = None
-                    tweet_bins[region]['1Q_' + property] = None
-                    tweet_bins[region]['3Q_' + property] = None
-                    tweet_bins[region]['sd_' + property] = None
+        for ses in bins.values():
+            for region in ses:
+                for property in properties:
+                    if ses[region]['count'] > 0:
+                        ses[region]['mean_' + property] = np.mean(ses[region][property])
+                        ses[region]['med_' + property] = np.median(ses[region][property])
+                        ses[region]['1Q_' + property] = np.percentile(ses[region][property], 25)
+                        ses[region]['3Q_' + property] = np.percentile(ses[region][property], 75)
+                        ses[region]['sd_' + property] = np.std(ses[region][property])
+                    else:
+                        ses[region]['mean_' + property] = None
+                        ses[region]['med_' + property] = None
+                        ses[region]['1Q_' + property] = None
+                        ses[region]['3Q_' + property] = None
+                        ses[region]['sd_' + property] = None
 
 
         with open(outputname, 'w') as fout:
@@ -596,19 +603,22 @@ class Test(object):
                 csvwriter.writerow(line)
         l.info("Output county stats to {0}".format(outputname))
 
-        with open(outputname.replace(".csv","_byurban.csv"), 'w') as fout:
+        with open(outputname.replace(".csv","_binned.csv"), 'w') as fout:
             csvwriter = csv.writer(fout)
-            header[0] = 'urban_class'
+            header[0] = 'class'
             csvwriter.writerow(header)
-            for region in tweet_bins:
-                line = [region, tweet_bins[region]['count'], tweet_bins[region]['within_county'], tweet_bins[region]['within_100km']]
-                for property in properties:
-                    line.append(tweet_bins[region]['mean_' + property])
-                    line.append(tweet_bins[region]['med_' + property])
-                    line.append(tweet_bins[region]['1Q_' + property])
-                    line.append(tweet_bins[region]['3Q_' + property])
-                    line.append(tweet_bins[region]['sd_' + property])
-                csvwriter.writerow(line)
+            for ses in bins:
+                header[0] = ses
+                csvwriter.writerow(header)
+                for region in ses:
+                    line = [region, ses[region]['count'], ses[region]['within_county'], ses[region]['within_100km']]
+                    for property in properties:
+                        line.append(ses[region]['mean_' + property])
+                        line.append(ses[region]['med_' + property])
+                        line.append(ses[region]['1Q_' + property])
+                        line.append(ses[region]['3Q_' + property])
+                        line.append(ses[region]['sd_' + property])
+                    csvwriter.writerow(line)
 
         with open(outputname.replace(".csv","_wholookslikeSF.csv"), 'w') as fout:
             csvwriter = csv.writer(fout)
@@ -679,13 +689,11 @@ class Test(object):
                             properties=['ntokens', 'ncomponents', 'npoints',
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
-                                        'covt95', 'covt90', 'covt50'],
-                            ses=ses)
+                                        'covt95', 'covt90', 'covt50'])
         if losses:
             self.map_tweets(losses, "{0}/test_failed_tweets_{1}.csv".format(outputdir, self.i),
                             cur,
-                            properties=[],
-                            ses=ses)
+                            properties=[])
 
 
     def where(self, phase, column):
