@@ -620,7 +620,7 @@ class Test(object):
                         line.append(ses[region]['sd_' + property])
                     csvwriter.writerow(line)
 
-        with open(outputname.replace(".csv","_wholookslikeSF.csv"), 'w') as fout:
+        with open(outputname.replace(".csv","_bestpointgeography.csv"), 'w') as fout:
             csvwriter = csv.writer(fout)
             header = [ID_FIELD, 'breakdown_of_estimated_locations']
             csvwriter.writerow(header)
