@@ -269,8 +269,10 @@ class Tweet(object):
             o.geom = None
             o.geom_src = None
         o.region_id = None
-        o.gender = None
-        o.race = None
+        o.gender = json['user']['name']
+        o.race = json['user']['name']
+        o.tweet = json.dumps(json)
+        o.uid = json['user']['id']
         return o
 
     @classmethod
