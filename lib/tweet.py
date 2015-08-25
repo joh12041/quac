@@ -202,7 +202,8 @@ class Tweet(object):
                  'geom_src',
                  'region_id',
                  'gender',
-                 'race')
+                 'race',
+                 'tweet')
 
     def __init__(self):
         self.tokens = None
