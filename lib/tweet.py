@@ -203,7 +203,8 @@ class Tweet(object):
                  'region_id',
                  'gender',
                  'race',
-                 'tweet')
+                 'tweet',
+                 'uid')
 
     def __init__(self):
         self.tokens = None
