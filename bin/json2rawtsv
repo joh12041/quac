@@ -141,8 +141,7 @@ def main():
         print('{0} : {1}'.format(rawtsv, filename_stats), file=dep_fp)
         #print >>dep_fp, '.INTERMEDIATE : %s' % (rawtsv)
         print('%s : %s %s' % (alltsv, rawtsv, filename_deps), file=dep_fp)
-        #print('pre/metadata: %s %s' % (alltsv, geotsv), file=dep_fp)
-        print('pre/metadata: %s' % (alltsv), file=dep_fp)
+        print('pre/metadata: %s %s' % (alltsv, geotsv), file=dep_fp)
     # done
     elapsed = time.time() - t_start
     l.info('done: %d objects in %s (%s/second); %d tweets, %d skips, %d parse failures'
