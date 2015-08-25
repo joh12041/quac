@@ -241,27 +241,27 @@ class Tweet(object):
         return self.created_at.strftime('%Y-%m-%d')
 
     @classmethod
-    def from_json(class_, json):
+    def from_json(class_, tjson):
         o = class_()
         # raw data
-        o.id = json['id']
+        o.id = tjson['id']
         # FIXME: This time parse routine is fairly slow (about half of the
         # total time is spent parsing dates).
-        o.created_at = time_.twitter_timestamp_parse(json['created_at'])
-        o.text = text_clean(json['text'])
-        o.user_screen_name = text_clean(json['user']['screen_name'])
-        o.user_description = text_clean(json['user']['description'])
-        if ('lang' in json['user']):
-            o.user_lang = text_clean(json['user']['lang'])
+        o.created_at = time_.twitter_timestamp_parse(tjson['created_at'])
+        o.text = text_clean(tjson['text'])
+        o.user_screen_name = text_clean(tjson['user']['screen_name'])
+        o.user_description = text_clean(tjson['user']['description'])
+        if ('lang' in tjson['user']):
+            o.user_lang = text_clean(tjson['user']['lang'])
         else:
             o.user_lang = None
-        o.user_location = text_clean(json['user']['location'])
-        o.user_time_zone = text_clean(json['user']['time_zone'])
+        o.user_location = text_clean(tjson['user']['location'])
+        o.user_time_zone = text_clean(tjson['user']['time_zone'])
         try:
-            o.geom = o.coords_to_point(json['coordinates']['coordinates'][0],
-                                       json['coordinates']['coordinates'][1])
+            o.geom = o.coords_to_point(tjson['coordinates']['coordinates'][0],
+                                       tjson['coordinates']['coordinates'][1])
             o.geom_src = 'co'
-            assert (json['coordinates']['type'] == 'Point')
+            assert (tjson['coordinates']['type'] == 'Point')
         except (TypeError, KeyError):
             # json['coordinates']:
             # - isn't a dict if there's no geotag (TypeError)
@@ -269,10 +269,10 @@ class Tweet(object):
             o.geom = None
             o.geom_src = None
         o.region_id = None
-        o.gender = json['user']['name']
-        o.race = json['user']['name']
-        o.tweet = json.dumps(json)
-        o.uid = json['user']['id']
+        o.gender = tjson['user']['name']
+        o.race = tjson['user']['name']
+        o.tweet = json.dumps(tjson)
+        o.uid = tjson['user']['id']
         return o
 
     @classmethod
