@@ -154,6 +154,8 @@ class Metrics_Tweet(Metrics):
         d['tweet_id'] = self.tweet.id
         d['region_id'] = self.tweet.region_id
         d['best_point'] = None
+        d['gender'] = self.tweet.gender
+        d['race'] = self.tweet.race
 
         for f in sorted(self.fields):
             d[f] = getattr(self.tweet, f)
@@ -474,7 +476,9 @@ class Test(object):
                           'n' : {'count':0, 'within_county':0, 'within_100km':0}}
         bins['race'] = {'b' : {'count':0, 'within_county':0, 'within_100km':0},
                         'l' : {'count':0, 'within_county':0, 'within_100km':0},
-                        'n' : {'count':0, 'within_county':0, 'within_100km':0}}
+                        'a' : {'count':0, 'within_county':0, 'within_100km':0},
+                        'w' : {'count':0, 'within_county':0, 'within_100km':0},
+                        'n' : {'count':0, 'within_county':0, 'within_100km':0},}
 
         # Get SES attribute to bin tweet results by (on top of binning by counties)
         cur.execute("SELECT fips as fips, {0} as age, {1} as urban from quac_ses".format('pct15to34', 'urban'))

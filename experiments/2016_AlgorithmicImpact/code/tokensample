@@ -35,7 +35,7 @@ def dump_partition(p, clabel, plabel):
    for tweet in p:
       tokens = sorted(((wt, tok)
                        for (tok, wt)
-                       in tweet.location_estimate.tokens.iteritems()),
+                       in tweet.location_estimate.tokens.items()),
                       reverse=True)
       weight = 0
       for (wt, tok) in tokens:
@@ -50,7 +50,7 @@ def dump_partition(p, clabel, plabel):
    filename = 'tokens_%s_%s.tsv' % (clabel, plabel)
    tsv = tsv_glue.Writer(filename, clobber=True)
    tsv.writerow(('weight', 'field', 'token'))
-   for (tok, wt) in tokens_part.iteritems():
+   for (tok, wt) in tokens_part.items():
       tsv.writerow([wt] + tok.split(' ', 1))
    l.info('wrote %s' % (filename))
 
