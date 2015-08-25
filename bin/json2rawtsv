@@ -133,7 +133,6 @@ def main():
             pass  # FIXME: do something with the other types of objects?
     # write dependencies
     dep_fp = open(filename_deps, 'w')
-    dont_write_geotsvs = False
     for date in out_tsvs:
         rawtsv = '%s.%s.raw.tsv' % (filename_base, date)
         alltsv = 'pre/%s.all.tsv' % (date)
@@ -141,7 +140,8 @@ def main():
         print('{0} : {1}'.format(rawtsv, filename_stats), file=dep_fp)
         #print >>dep_fp, '.INTERMEDIATE : %s' % (rawtsv)
         print('%s : %s %s' % (alltsv, rawtsv, filename_deps), file=dep_fp)
-        print('pre/metadata: %s %s' % (alltsv, geotsv), file=dep_fp)
+        #print('pre/metadata: %s %s' % (alltsv, geotsv), file=dep_fp)
+        print('pre/metadata: %s' % (alltsv), file=dep_fp)
     # done
     elapsed = time.time() - t_start
     l.info('done: %d objects in %s (%s/second); %d tweets, %d skips, %d parse failures'
@@ -164,13 +164,13 @@ def main():
             return tsv_glue.Dict.filename_from_key(self, '.%s.raw' % (key))
 
 
-    ### Bootstrap ###
+### Bootstrap ###
 
-    try:
-        args = u.parse_args(ap)
-        u.configure(None)
+try:
+    args = u.parse_args(ap)
+    u.configure(None)
 
-        if (__name__ == '__main__'):
-            main()
-    except testable.Unittests_Only_Exception:
-        testable.register('')
+    if (__name__ == '__main__'):
+        main()
+except testable.Unittests_Only_Exception:
+    testable.register('')
