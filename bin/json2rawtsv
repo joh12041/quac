@@ -149,19 +149,19 @@ def main():
               tweet_ct, skip_ct, parse_failure_ct))
 
 
-    ### Support functions and classes ###
+### Support functions and classes ###
 
-    class TSV_Dict(tsv_glue.Dict):
-        '''Lazy-loading TSV output dict that deals in date strings and has some of
-           the defaults different.'''
+class TSV_Dict(tsv_glue.Dict):
+    '''Lazy-loading TSV output dict that deals in date strings and has some of
+       the defaults different.'''
 
-        def __init__(self, *args, **kwargs):
-            kwargs.setdefault('clobber', True)
-            kwargs.setdefault('class_', tweet.Writer)
-            tsv_glue.Dict.__init__(self, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('clobber', True)
+        kwargs.setdefault('class_', tweet.Writer)
+        tsv_glue.Dict.__init__(self, *args, **kwargs)
 
-        def filename_from_key(self, key):
-            return tsv_glue.Dict.filename_from_key(self, '.%s.raw' % (key))
+    def filename_from_key(self, key):
+        return tsv_glue.Dict.filename_from_key(self, '.%s.raw' % (key))
 
 
 ### Bootstrap ###
