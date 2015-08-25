@@ -54,122 +54,124 @@ gr.add_argument('file',
 ### Main ###
 
 def main():
-   # init
-   t_start = time.time()
-   try:
-      filename_stats = args.file
-      filename_base = u.without_ext(filename_stats, STATS_FILE_EXTENSION)
-      filename_json = filename_base + TWEET_FILE_EXTENSION
-      filename_deps = filename_base + DEP_FILE_EXTENSION
-   except ValueError as x:
-      u.abort('bad .stats file: %s' % (x))
-   global l
-   l = u.logging_init('parse', file_=filename_base + '.log', truncate=True,
-                      stderr_force=True)
-   l.info('starting')
-   try:
-      json_fp = gzip.open(filename_json, mode='rt', encoding='utf8')
-   except IOError as x:
-      u.abort("can't open raw tweet file: %s" % (x))
-   out_tsvs = TSV_Dict(filename_base)
-   l.info('opened %s' % (filename_json))
-   # Loop over raw tweets. Note that according to the Twitter docs, tweets can
-   # contain newline characters (\n), the implication being that they will be
-   # unencoded, and JSON objects are separated by a return-newline sequence
-   # (\r\n). However, I'm pretty sure we're separating lines by only newlines
-   # in the files, and I don't recall running into parsing problems with
-   # unencoded newlines in messages.
-   line_no = 0
-   object_ct = 0
-   tweet_ct = 0
-   skip_ct = 0
-   parse_failure_ct = 0
-   for line in json_fp:
-      line_no += 1
-      if (args.limit is not None and line_no > args.limit):
-         l.info('stopping after %d lines per --limit' % (args.limit))
-         break
-      if (len(line) == 0 or line[0] != '{'):
-         # Line doesn't appear to start a JSON object, so skip it.
-         skip_ct += 1
-         continue
-      try:
-         # We get lots of spurious line breaks within tweets. The way we deal
-         # with this is, if parsing a line fails, we paste on the next line
-         # and try again, up to some limit in which case we give up and
-         # re-raise the exception.
-         error_ct = 0
-         while True:
-            try:
-               #print '\n\nTRYING %d <<<%s>>>' % (error_ct, line)
-               po = tweet.from_json(line)
-            except ValueError as x:
-               #print 'BARF: %s' % (x)
-               if (error_ct < LINE_COMBINE_LIMIT):
-                  line = line[:-1] + next(json_fp)  # StopIteration at EOF
-                  error_ct += 1
-                  line_no += 1
-               else:
-                  l.info('giving up line pasting after %d chunks'
-                         % (LINE_COMBINE_LIMIT))
-                  raise x
-            else:
-               break
-      except tweet.Nothing_To_Parse_Error as x:
-         # no content on this line, silently skip
-         continue
-      except (ValueError, StopIteration) as x:
-         # some other parse error, warn and abort if too many
-         l.info('parsing failed on line %d, skipping: %s' % (line_no, x))
-         parse_failure_ct += 1
-         if (parse_failure_ct > c.getint('pars', 'parse_failure_max')):
-            u.abort('too many parse failures, aborting')
-         continue
-      object_ct += 1
-      if (isinstance(po, tweet.Tweet)):
-         tweet_ct += 1
-         out_tsvs[po.day].writerow(po)
-      else:
-         pass  # FIXME: do something with the other types of objects?
-   # write dependencies
-   dep_fp = open(filename_deps, 'w')
-   for date in out_tsvs:
-      rawtsv = '%s.%s.raw.tsv' % (filename_base, date)
-      alltsv = 'pre/%s.all.tsv' % (date)
-      geotsv = 'pre/%s.geo.tsv' % (date)
-      print('%s : %s' % (rawtsv, filename_stats), file=dep_fp)
-      #print >>dep_fp, '.INTERMEDIATE : %s' % (rawtsv)
-      print('%s : %s %s' % (alltsv, rawtsv, filename_deps), file=dep_fp)
-      print('pre/metadata: %s %s' % (alltsv, geotsv), file=dep_fp)
-   # done
-   elapsed = time.time() - t_start
-   l.info('done: %d objects in %s (%s/second); %d tweets, %d skips, %d parse failures'
-          % (object_ct, u.fmt_seconds(elapsed), u.fmt_si(object_ct / elapsed),
-             tweet_ct, skip_ct, parse_failure_ct))
+    # init
+    t_start = time.time()
+    try:
+        filename_stats = args.file
+        filename_base = u.without_ext(filename_stats, STATS_FILE_EXTENSION)
+        filename_json = filename_base + TWEET_FILE_EXTENSION
+        filename_deps = filename_base + DEP_FILE_EXTENSION
+    except ValueError as x:
+        u.abort('bad .stats file: %s' % (x))
+    global l
+    l = u.logging_init('parse', file_=filename_base + '.log', truncate=True,
+                       stderr_force=True)
+    l.info('starting')
+    try:
+        json_fp = gzip.open(filename_json, mode='rt', encoding='utf8')
+    except IOError as x:
+        u.abort("can't open raw tweet file: %s" % (x))
+    out_tsvs = TSV_Dict(filename_base)
+    l.info('opened %s' % (filename_json))
+    # Loop over raw tweets. Note that according to the Twitter docs, tweets can
+    # contain newline characters (\n), the implication being that they will be
+    # unencoded, and JSON objects are separated by a return-newline sequence
+    # (\r\n). However, I'm pretty sure we're separating lines by only newlines
+    # in the files, and I don't recall running into parsing problems with
+    # unencoded newlines in messages.
+    line_no = 0
+    object_ct = 0
+    tweet_ct = 0
+    skip_ct = 0
+    parse_failure_ct = 0
+    for line in json_fp:
+        line_no += 1
+        if (args.limit is not None and line_no > args.limit):
+            l.info('stopping after %d lines per --limit' % (args.limit))
+            break
+        if (len(line) == 0 or line[0] != '{'):
+            # Line doesn't appear to start a JSON object, so skip it.
+            skip_ct += 1
+            continue
+        try:
+            # We get lots of spurious line breaks within tweets. The way we deal
+            # with this is, if parsing a line fails, we paste on the next line
+            # and try again, up to some limit in which case we give up and
+            # re-raise the exception.
+            error_ct = 0
+            while True:
+                try:
+                    #print '\n\nTRYING %d <<<%s>>>' % (error_ct, line)
+                    po = tweet.from_json(line)
+                except ValueError as x:
+                    #print 'BARF: %s' % (x)
+                    if (error_ct < LINE_COMBINE_LIMIT):
+                        line = line[:-1] + next(json_fp)  # StopIteration at EOF
+                        error_ct += 1
+                        line_no += 1
+                    else:
+                        l.info('giving up line pasting after %d chunks'
+                               % (LINE_COMBINE_LIMIT))
+                        raise x
+                else:
+                    break
+        except tweet.Nothing_To_Parse_Error as x:
+            # no content on this line, silently skip
+            continue
+        except (ValueError, StopIteration) as x:
+            # some other parse error, warn and abort if too many
+            l.info('parsing failed on line %d, skipping: %s' % (line_no, x))
+            parse_failure_ct += 1
+            if (parse_failure_ct > c.getint('pars', 'parse_failure_max')):
+                u.abort('too many parse failures, aborting')
+            continue
+        object_ct += 1
+        if (isinstance(po, tweet.Tweet)):
+            tweet_ct += 1
+            out_tsvs[po.day].writerow(po)
+        else:
+            pass  # FIXME: do something with the other types of objects?
+    # write dependencies
+    dep_fp = open(filename_deps, 'w')
+    dont_write_geotsvs = False
+    for date in out_tsvs:
+        rawtsv = '%s.%s.raw.tsv' % (filename_base, date)
+        alltsv = 'pre/%s.all.tsv' % (date)
+        geotsv = 'pre/%s.geo.tsv' % (date)
+        print('{0} : {1}'.format(rawtsv, filename_stats), file=dep_fp)
+        #print >>dep_fp, '.INTERMEDIATE : %s' % (rawtsv)
+        print('%s : %s %s' % (alltsv, rawtsv, filename_deps), file=dep_fp)
+        #print('pre/metadata: %s %s' % (alltsv, geotsv), file=dep_fp)
+        print('pre/metadata: %s' % (alltsv), file=dep_fp)
+    # done
+    elapsed = time.time() - t_start
+    l.info('done: %d objects in %s (%s/second); %d tweets, %d skips, %d parse failures'
+            % (object_ct, u.fmt_seconds(elapsed), u.fmt_si(object_ct / elapsed),
+              tweet_ct, skip_ct, parse_failure_ct))
 
 
-### Support functions and classes ###
+    ### Support functions and classes ###
 
-class TSV_Dict(tsv_glue.Dict):
-   '''Lazy-loading TSV output dict that deals in date strings and has some of
-      the defaults different.'''
+    class TSV_Dict(tsv_glue.Dict):
+        '''Lazy-loading TSV output dict that deals in date strings and has some of
+           the defaults different.'''
 
-   def __init__(self, *args, **kwargs):
-      kwargs.setdefault('clobber', True)
-      kwargs.setdefault('class_', tweet.Writer)
-      tsv_glue.Dict.__init__(self, *args, **kwargs)
+        def __init__(self, *args, **kwargs):
+            kwargs.setdefault('clobber', True)
+            kwargs.setdefault('class_', tweet.Writer)
+            tsv_glue.Dict.__init__(self, *args, **kwargs)
 
-   def filename_from_key(self, key):
-      return tsv_glue.Dict.filename_from_key(self, '.%s.raw' % (key))
+        def filename_from_key(self, key):
+            return tsv_glue.Dict.filename_from_key(self, '.%s.raw' % (key))
 
 
-### Bootstrap ###
+    ### Bootstrap ###
 
-try:
-   args = u.parse_args(ap)
-   u.configure(None)
+    try:
+        args = u.parse_args(ap)
+        u.configure(None)
 
-   if (__name__ == '__main__'):
-      main()
-except testable.Unittests_Only_Exception:
-   testable.register('')
+        if (__name__ == '__main__'):
+            main()
+    except testable.Unittests_Only_Exception:
+        testable.register('')
