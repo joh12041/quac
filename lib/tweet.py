@@ -390,7 +390,9 @@ class Tweet(object):
                  self.geom_src,
                  self.region_id,
                  self.gender,
-                 self.race ]
+                 self.race,
+                 self.uid,
+                 self.tweet]
 
     def tokenize(self, tker, fields, unify):
         '''Tokenize given fields and set self.tokens to the resulting sequence.
