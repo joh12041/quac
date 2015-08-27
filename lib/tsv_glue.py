@@ -28,7 +28,7 @@ class Reader(object):
    '''Read rows are returned as lists. Empty strings are converted to None.
       Converting to numbers, etc., is the responsibility of the caller.'''
 
-   __slots__ = ('fp', 'separator')
+   __slots__ = ('fp', 'separator', 'fin')
 
    def __init__(self, file_, buffering=-1, separator='\t', mode='t'):
       '''Open a TSV file for reading and return the reader object; the file
@@ -59,7 +59,7 @@ class Reader(object):
 
 class Writer(object):
 
-   __slots__ = ('filename', 'fp')
+   __slots__ = ('filename', 'fp', 'fout')
 
    def __init__(self, file_, fp=None, buffering=-1, clobber=False):
       '''Open a TSV file for writing and return the writer object. file_ can
