@@ -273,7 +273,7 @@ class Tweet(object):
         o.region_id = None
         o.gender = tjson['user']['name']
         o.race = tjson['user']['name']
-        o.tweet = json.dumps(tjson)
+        o.tweet = tjson
         o.uid = tjson['user']['id']
         return o
 
@@ -392,7 +392,7 @@ class Tweet(object):
                  self.gender,
                  self.race,
                  self.uid,
-                 self.tweet]
+                 json.dumps(self.tweet)]
 
     def tokenize(self, tker, fields, unify):
         '''Tokenize given fields and set self.tokens to the resulting sequence.
