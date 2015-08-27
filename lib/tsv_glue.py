@@ -18,6 +18,7 @@
 
 import collections
 import io
+import csv
 
 import u
 
@@ -70,10 +71,11 @@ class Writer(object):
          # Python bug (e.g., <http://bugs.python.org/issue6236>)? Anyway, we
          # work around it by forcing mode='wt', since mode='at' isn't
          # meaningful in that context anyway.
-         mode = 'wt'
+         mode = 'w'
       else:
-         mode = 'at'
-      self.fp = io.open(file_, mode=mode, buffering=buffering, encoding='utf8')
+         mode = 'a'
+      fout = open(file_, mode=mode, buffering=buffering, encoding='utf8')
+      self.fp = csv.writer(fout)
 
    def close(self):
       self.fp.close()
@@ -82,12 +84,13 @@ class Writer(object):
       self.fp.flush()
 
    def writerow(self, row):
-      def _unicodify(s):
-         if s is None:
-            return ''
-         else:
-            return str(s)
-      self.fp.write('\t'.join([_unicodify(i) for i in row]) + '\n')
+      self.fp.writerow(row)
+      # def _unicodify(s):
+      #    if s is None:
+      #       return ''
+      #    else:
+      #       return str(s)
+      # self.fp.write('\t'.join([_unicodify(i) for i in row]) + '\n')
 
 
 class Dict(collections.defaultdict):
@@ -117,7 +120,7 @@ class Dict(collections.defaultdict):
          f.close()
 
    def filename_from_key(self, key):
-      return (self.prefix + key + '.tsv')
+      return (self.prefix + key + '.csv')
 
    def iterfiles(self):
       return [self.filename_from_key(i) for i in self.keys()]
