@@ -68,7 +68,7 @@ def tsv_process(tsv_name, md):
    if (re.search(r'\.geo\.tsv$', tsv_name)):
       l.info('reading %s (geo)' % (tsv_name))
       md[date]['count_geotag'] = int_cmd("wc -l %s | cut -d' ' -f1", tsv_name)
-   elif (re.search(r'\.all\.tsv$', tsv_name)):
+   elif (re.search(r'\.all\.csv$', tsv_name)):
       l.info('reading %s (all)' % (tsv_name))
       md[date]['count'] = int_cmd("wc -l %s | cut -d' ' -f1", tsv_name)
       md[date]['min_id'] = int_cmd('head -1 %s | cut -f1', tsv_name)
