@@ -24,7 +24,7 @@ SORT_MEM := 512M
 stats_pat := raw/*/*.stats
 json_d_pat := raw/*/*.json.d
 rawtsv_pat := raw/*/*.raw.tsv
-alltsv_pat := pre/*.all.tsv
+alltsv_pat := pre/*.all.csv
 geotsv_pat := pre/*.geo.tsv
 log_pat := pre/*.log raw/*/*.log
 gnuplot_pdf_pat := pre/*.gp.pdf
@@ -112,7 +112,7 @@ json2rawtsv = ../bin/json2rawtsv $(VERBOSE) $(LIMIT) $<
 %.raw.tsv:
 	$(json2rawtsv)
 
-%.all.tsv:
+%.all.csv:
 	sort -o $@ -n -u -S $(SORT_MEM) -T . $(filter %.raw.tsv, $^)
 
 # Comment this out because just creates duplicate files for my data

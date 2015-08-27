@@ -135,7 +135,7 @@ def main():
     dep_fp = open(filename_deps, 'w')
     for date in out_tsvs:
         rawtsv = '%s.%s.raw.tsv' % (filename_base, date)
-        alltsv = 'pre/%s.all.tsv' % (date)
+        alltsv = 'pre/%s.all.csv' % (date)
         geotsv = 'pre/%s.geo.tsv' % (date)
         print('{0} : {1}'.format(rawtsv, filename_stats), file=dep_fp)
         #print >>dep_fp, '.INTERMEDIATE : %s' % (rawtsv)
