@@ -71,8 +71,8 @@ def tsv_process(tsv_name, md):
    elif (re.search(r'\.all\.csv$', tsv_name)):
       l.info('reading %s (all)' % (tsv_name))
       md[date]['count'] = int_cmd("wc -l %s | cut -d' ' -f1", tsv_name)
-      md[date]['min_id'] = int_cmd('head -1 %s | cut -f1', tsv_name)
-      md[date]['max_id'] = int_cmd('tail -1 %s | cut -f1', tsv_name)
+      md[date]['min_id'] = int_cmd("head -1 %s | cut -d',' -f1", tsv_name)
+      md[date]['max_id'] = int_cmd("tail -1 %s | cut -d',' -f1", tsv_name)
    else:
       u.abort('unknown file type: %s' % (tsv_name))
 
