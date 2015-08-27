@@ -23,9 +23,9 @@ SORT_MEM := 512M
 # definition they don't exist yet.)
 stats_pat := raw/*/*.stats
 json_d_pat := raw/*/*.json.d
-rawtsv_pat := raw/*/*.raw.tsv
+rawtsv_pat := raw/*/*.raw.csv
 alltsv_pat := pre/*.all.csv
-geotsv_pat := pre/*.geo.tsv
+geotsv_pat := pre/*.geo.csv
 log_pat := pre/*.log raw/*/*.log
 gnuplot_pdf_pat := pre/*.gp.pdf
 
@@ -109,11 +109,11 @@ json2rawtsv = ../bin/json2rawtsv $(VERBOSE) $(LIMIT) $<
 # 1. .raw.tsv depend on the corresponding .stats.
 # 2. .all.tsv depend on each .raw.tsv for the same date.
 
-%.raw.tsv:
+%.raw.csv:
 	$(json2rawtsv)
 
 %.all.csv:
-	sort -o $@ -n -u -S $(SORT_MEM) -T . $(filter %.raw.tsv, $^)
+	sort -o $@ -n -u -S $(SORT_MEM) -T . $(filter %.raw.csv, $^)
 
 # Comment this out because just creates duplicate files for my data
 # %.geo.tsv: %.all.tsv

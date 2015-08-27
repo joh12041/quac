@@ -134,9 +134,9 @@ def main():
     # write dependencies
     dep_fp = open(filename_deps, 'w')
     for date in out_tsvs:
-        rawtsv = '%s.%s.raw.tsv' % (filename_base, date)
+        rawtsv = '%s.%s.raw.csv' % (filename_base, date)
         alltsv = 'pre/%s.all.csv' % (date)
-        geotsv = 'pre/%s.geo.tsv' % (date)
+        geotsv = 'pre/%s.geo.csv' % (date)
         print('{0} : {1}'.format(rawtsv, filename_stats), file=dep_fp)
         #print >>dep_fp, '.INTERMEDIATE : %s' % (rawtsv)
         print('%s : %s %s' % (alltsv, rawtsv, filename_deps), file=dep_fp)

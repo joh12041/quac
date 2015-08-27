@@ -36,21 +36,25 @@ class Reader(object):
          a filename which does not exist, raise an exception.'''
       self.separator = separator
       mode = 'r' + mode
-      self.fp = io.open(file_, mode=mode, buffering=buffering)
+      self.fin = open(file_, mode='r', buffering=buffering)
+      #self.fp = io.open(file_, mode=mode, buffering=buffering)
+      self.fp = csv.reader(self.fin)
 
    def __iter__(self):
       return self
 
    def close(self):
-      self.fp.close()
+      self.fin.close()
+       #self.fp.close()
 
    def __next__(self):
-      line = self.fp.readline()
-      line = line.rstrip('\n')
-      if (line == ''):
-         raise StopIteration
-      return [(col if col != '' else None)
-              for col in line.split(self.separator)]
+      return next(self.fp)
+      # line = self.fp.readline()
+      # line = line.rstrip('\n')
+      # if (line == ''):
+      #    raise StopIteration
+      # return [(col if col != '' else None)
+      #         for col in line.split(self.separator)]
 
 
 class Writer(object):
@@ -74,14 +78,16 @@ class Writer(object):
          mode = 'w'
       else:
          mode = 'a'
-      fout = open(file_, mode=mode, buffering=buffering, encoding='utf8')
-      self.fp = csv.writer(fout)
+      self.fout = open(file_, mode=mode, buffering=buffering, encoding='utf8')
+      self.fp = csv.writer(self.fout)
 
    def close(self):
-      self.fp.close()
+      self.fout.close()
+      #self.fp.close()
 
    def flush(self):
-      self.fp.flush()
+      self.fout.flush()
+      #self.fp.flush()
 
    def writerow(self, row):
       self.fp.writerow(row)
