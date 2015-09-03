@@ -57,7 +57,7 @@ TWEETS_PER_SEC_MIN = 12  # i.e., about 1M/day
 GEOTAGGED_FRACTION = 0.95
 
 DATABASE = "twitterstream_zh_us"
-TABLE = "quac_test"
+TABLE = "tweet_as_json"
 
 
 ### Functions ###
@@ -299,12 +299,11 @@ class Test(object):
     # fetch tweets
         try:
             cur.execute(
-                "SELECT tweet_id as tweet_id, created_at as created_at, day as day, \
-                    hour as hour, text as text, user_screen_name as user_screen_name, \
-                    user_description as user_description, user_lang as user_lang, \
-                    user_location as user_location, user_time_zone as user_time_zone, \
-                    lat as lat, lon as lon, geotagged as geom_src, county_fips as region_id \
-                FROM {0} WHERE {1}".format(TABLE, self.where(phase, 'created_at')))
+                "SELECT id as tweet_id, created_at as created_at, text as text,"
+                "user_screen_name as user_screen_name, user_description as user_description, user_lang as user_lang,"
+                "user_location as user_location, user_time_zone as user_time_zone, lat as lat, lon as lon,"
+                "geotagged as geom_src, county_fips as region_id, gender as gender, race as race"
+                "FROM {0} WHERE {1}".format(TABLE, self.where(phase, 'created_at')))
             rows = cur.fetchall()
         except:
             l.info("tweet selection from db failed")
@@ -455,7 +454,7 @@ class Test(object):
 
     def map_tweets(self, tweets, outputname, cur, properties=[],
                    geojsonfn="/export/scratch2/isaacj/geometries/USCounties_bare.geojson",
-                   gender=False, race=False):
+                   gender=True, race=True):
         ID_FIELD = "FIPS"
 
         bins = {}
@@ -530,20 +529,16 @@ class Test(object):
                             bins[ses][counties[tweet.region_id][ses]]['within_county'] += 1
                         if tweet.region_id in counties[tweet.region_id]['est_counties']:
                             counties[tweet.region_id]['est_counties'][tweet.region_id]['count'] += 1
-                            counties[tweet.region_id]['est_counties'][tweet.region_id]['dcae'].append(tweet.cae)
-                            counties[tweet.region_id]['est_counties'][tweet.region_id]['dsae'].append(tweet.sae)
                         else:
-                            counties[tweet.region_id]['est_counties'][tweet.region_id] = {'count':1, 'dcae':[tweet.cae] ,'dsae':[tweet.sae]}
+                            counties[tweet.region_id]['est_counties'][tweet.region_id] = {'count':1}
 
                     else:
                         for county in counties:
                             if counties[county]['shape'].contains(tweet.best_point):
                                 if county in counties[tweet.region_id]['est_counties']:
                                     counties[tweet.region_id]['est_counties'][county]['count'] += 1
-                                    counties[tweet.region_id]['est_counties'][county]['dcae'].append(tweet.cae)
-                                    counties[tweet.region_id]['est_counties'][county]['dsae'].append(tweet.sae)
                                 else:
-                                    counties[tweet.region_id]['est_counties'][county] = {'count':1, 'dcae':[tweet.cae] ,'dsae':[tweet.sae]}
+                                    counties[tweet.region_id]['est_counties'][county] = {'count':1}
                                 break
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
@@ -629,14 +624,9 @@ class Test(object):
             header = [ID_FIELD, 'breakdown_of_estimated_locations']
             csvwriter.writerow(header)
             for fips in counties:
-                for county in counties[fips]['est_counties']:
-                    counties[fips]['est_counties'][county]['sdcae'] = np.std(counties[fips]['est_counties'][county]['dcae'])
-                    counties[fips]['est_counties'][county]['sdsae'] = np.std(counties[fips]['est_counties'][county]['dsae'])
-                    counties[fips]['est_counties'][county]['dcae'] = np.median(counties[fips]['est_counties'][county]['dcae'])
-                    counties[fips]['est_counties'][county]['dsae'] = np.median(counties[fips]['est_counties'][county]['dsae'])
                 csvwriter.writerow([fips, str(counties[fips]['est_counties'])])
 
-        l.info("Output urban stats to {0}".format(outputname.replace(".csv","_byurban.csv")))
+        l.info("Outputted demographic stats to {0}".format(outputname.replace(".csv","_binned.csv")))
 
 
     def meanmedian(self, robj, validp, source, success_attr, attrs):
