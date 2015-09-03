@@ -303,7 +303,7 @@ class Test(object):
                 "user_screen_name as user_screen_name, user_description as user_description, user_lang as user_lang, "
                 "user_location as user_location, user_time_zone as user_time_zone, lat as lat, lon as lon, "
                 "geotagged as geom_src, county_fips as region_id, gender as gender, race as race "
-                "FROM {0} WHERE {1}".format(TABLE, self.where(phase, 'created_at')))
+                "FROM {0} WHERE {1} AND county_fips IS NOT NULL".format(TABLE, self.where(phase, 'created_at')))
             rows = cur.fetchall()
         except:
             l.info("tweet selection from db failed")
