@@ -302,11 +302,11 @@ class Tweet(object):
         if 'gender' in dict_:
             o.gender = dict_['gender']
         else:
-            o.gender = None
+            o.gender = 'n'
         if 'race' in dict_:
             o.race = dict_['race']
         else:
-            o.race = None
+            o.race = 'n'
         return o
 
     @classmethod
@@ -331,11 +331,11 @@ class Tweet(object):
         try:
             o.gender = int[list_[12]]
         except:
-            o.gender = None
+            o.gender = 'n'
         try:
             o.race = int[list_[13]]
         except:
-            o.race = None
+            o.race = 'n'
         return o
 
     def coords_to_point(self, lon, lat):

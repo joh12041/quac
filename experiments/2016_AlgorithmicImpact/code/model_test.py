@@ -524,7 +524,7 @@ class Test(object):
                     if ses in counties[tweet.region_id]:
                         bins[ses][counties[tweet.region_id][ses]]['count'] += 1
                     else:
-                        bins[ses][tweet[ses]]['count'] += 1
+                        bins[ses][tweet.ses]['count'] += 1
                 if hasattr(tweet, 'best_point'):  # do I need to count if there are tweets without a best point?
                     if counties[tweet.region_id]['shape'].contains(tweet.best_point):
                         counties[tweet.region_id]['within_county'] += 1
@@ -532,7 +532,7 @@ class Test(object):
                             if ses in counties[tweet.region_id]:
                                 bins[ses][counties[tweet.region_id][ses]]['within_county'] += 1
                             else:
-                                bins[ses][tweet[ses]]['within_county'] += 1
+                                bins[ses][tweet.ses]['within_county'] += 1
                         if tweet.region_id in counties[tweet.region_id]['est_counties']:
                             counties[tweet.region_id]['est_counties'][tweet.region_id]['count'] += 1
                         else:
@@ -552,14 +552,14 @@ class Test(object):
                             if ses in counties[tweet.region_id]:
                                 bins[ses][counties[tweet.region_id][ses]]['within_100km'] += 1
                             else:
-                                bins[ses][tweet[ses]]['within_100km'] += 1
+                                bins[ses][tweet.ses]['within_100km'] += 1
                 for property in properties:
                     counties[tweet.region_id][property].append(getattr(tweet, property))
                     for ses in bins:
                         if ses in counties[tweet.region_id]:
                             bins[ses][counties[tweet.region_id][ses]][property].append(getattr(tweet, property))
                         else:
-                            bins[ses][tweet[ses]][property].append(getattr(tweet, property))
+                            bins[ses][tweet.ses][property].append(getattr(tweet, property))
         l.info('{0} out of {1} tweets matched via region_id.'.format(count_matched, len(tweets)))
 
         for fips in counties:
