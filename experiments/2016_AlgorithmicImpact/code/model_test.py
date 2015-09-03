@@ -477,7 +477,7 @@ class Test(object):
                         'l' : {'count':0, 'within_county':0, 'within_100km':0},
                         'a' : {'count':0, 'within_county':0, 'within_100km':0},
                         'w' : {'count':0, 'within_county':0, 'within_100km':0},
-                        'n' : {'count':0, 'within_county':0, 'within_100km':0},}
+                        'n' : {'count':0, 'within_county':0, 'within_100km':0}}
 
         # Get SES attribute to bin tweet results by (on top of binning by counties)
         cur.execute("SELECT fips as fips, {0} as age, {1} as urban from quac_ses".format('pct15to34', 'urban'))
@@ -622,13 +622,13 @@ class Test(object):
                 header[0] = ses
                 csvwriter.writerow(header)
                 for region in ses:
-                    line = [region, ses[region]['count'], ses[region]['within_county'], ses[region]['within_100km']]
+                    line = [region, bins[ses][region]['count'], bins[ses][region]['within_county'], bins[ses][region]['within_100km']]
                     for property in properties:
-                        line.append(ses[region]['mean_' + property])
-                        line.append(ses[region]['med_' + property])
-                        line.append(ses[region]['1Q_' + property])
-                        line.append(ses[region]['3Q_' + property])
-                        line.append(ses[region]['sd_' + property])
+                        line.append(bins[ses][region]['mean_' + property])
+                        line.append(bins[ses][region]['med_' + property])
+                        line.append(bins[ses][region]['1Q_' + property])
+                        line.append(bins[ses][region]['3Q_' + property])
+                        line.append(bins[ses][region]['sd_' + property])
                     csvwriter.writerow(line)
 
         with open(outputname.replace(".csv","_bestpointgeography.csv"), 'w') as fout:
