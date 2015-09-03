@@ -621,7 +621,7 @@ class Test(object):
             for ses in bins:
                 header[0] = ses
                 csvwriter.writerow(header)
-                for region in ses:
+                for region in bins[ses]:
                     line = [region, bins[ses][region]['count'], bins[ses][region]['within_county'], bins[ses][region]['within_100km']]
                     for property in properties:
                         line.append(bins[ses][region]['mean_' + property])
