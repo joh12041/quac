@@ -57,7 +57,6 @@ TWEETS_PER_SEC_MIN = 12  # i.e., about 1M/day
 GEOTAGGED_FRACTION = 0.95
 
 DATABASE = "twitterstream_zh_us"
-TABLE = "tweet_as_json"
 
 
 ### Functions ###
@@ -205,6 +204,14 @@ class Test(object):
         self.training_duration = training_d
         self.gap = gap
         self.testing_duration = testing_d
+        if self.start.year == 2014:
+            self.training_table = "tweet_as_json"
+        elif self.start.year == 2015:
+            self.training_table = "tweet_as_json_2015_05_27"
+        else:
+            raise Exception("Start date not in 2014 or 2015 - no tweet data available.")
+        if gap > timedelta(30):  # longer than 30-days
+            self.testing_table = "tweet_as_json_2015_05_27"
         
     def __str__(self):
         return str(self.start)
@@ -298,12 +305,16 @@ class Test(object):
     def fetch(self, cur, srid, phase, tzer, fields, unify, excluded=None, args=None):
     # fetch tweets
         try:
+            if phase == 'training':
+                table = self.training_table
+            elif phase == 'testing':
+                table = self.testing_table
             cur.execute(
                 "SELECT id as tweet_id, created_at as created_at, text as text, "
                 "user_screen_name as user_screen_name, user_description as user_description, user_lang as user_lang, "
                 "user_location as user_location, user_time_zone as user_time_zone, lat as lat, lon as lon, "
                 "geotagged as geom_src, county_fips as region_id, gender as gender, race as race "
-                "FROM {0} WHERE {1} AND county_fips IS NOT NULL".format(TABLE, self.where(phase, 'created_at')))
+                "FROM {0} WHERE {1} AND county_fips IS NOT NULL".format(table, self.where(phase, 'created_at')))
             rows = cur.fetchall()
         except:
             l.info("tweet selection from db failed")
