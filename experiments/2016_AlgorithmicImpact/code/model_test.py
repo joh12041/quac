@@ -336,19 +336,25 @@ class Test(object):
         return (tweets, users)
 
     def filter_geometry(self, tweets, ses, cur, how, limit):
-        potential_ses = ['urban', 'pct15to34', 'pop_pct', 'random', 'area_pct', 'senate']  # these correspond with a PostgreSQL table column names
-        if ses == 'urban':
+        # these correspond with a PostgreSQL table column names or are demographic attributes of tweets.
+        potential_ses = ['urban', 'pct15to34', 'pop_pct', 'random', 'area_pct', 'senate', 'gender', 'race']
+
+        if ses == 'urban':  # By county: 1 = most urban, 6 = most rural
             weights = {'balanced' : {1:0.305, 2:0.248, 3:0.206, 4:0.092, 5:0.088, 6:0.062},
                        'expected' : {1:0.396, 2:0.237, 3:0.195, 4:0.081, 5:0.063, 6:0.028},
                          'urban1' : {1:0.534, 2:0.372, 3:0.044, 4:0.020, 5:0.019, 6:0.013},
                          'rural1' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108},
                          'urbanf' : {1:0.420, 2:0.333, 3:0.250, 4:0.000, 5:0.000, 6:0.000},
                          'ruralf' : {1:0.000, 2:0.000, 3:0.000, 4:0.250, 5:0.333, 6:0.420}}
-        elif ses == 'pct15to34':
-            weights = {'balanced' : {'<20':0.021, '20-24':0.171, '24-27':0.282, '27-32':0.430, '32-40':0.083, '40+':0.014},
-                       'expected' : {'<20':0.008, '20-24':0.109, '24-27':0.248, '27-32':0.475, '32-40':0.133, '40+':0.027},
-                         'younger': {'<20':0.000, '20-24':0.000, '24-27':0.000, '27-32':0.000, '32-40':0.000, '40+':0.000},
-                           'older': {'<20':0.042, '20-24':0.232, '24-27':0.340, '27-32':0.340, '32-40':0.041, '40+':0.005}}
+        elif ses == 'pct15to34':  # By county, <20 = <20% of people between ages 15-34, >=40 = >=40% of people between ages 15-34
+            weights = {'balanced' : {'<20':0.021, '20-24':0.171, '24-27':0.282, '27-32':0.430, '32-40':0.083, '>=40':0.014},
+                       'expected' : {'<20':0.008, '20-24':0.109, '24-27':0.248, '27-32':0.475, '32-40':0.133, '>=40':0.027},
+                         'younger': {'<20':0.000, '20-24':0.000, '24-27':0.000, '27-32':0.000, '32-40':0.000, '>=40':0.000},
+                           'older': {'<20':0.042, '20-24':0.232, '24-27':0.340, '27-32':0.340, '32-40':0.041, '>=40':0.005}}
+        elif ses == 'gender':  # Male, female, or unknown ('n') presassigned to tweets based on the self-reported name of the user
+            weights = {'balanced'    : {'m':0.5, 'f':0.5},
+                       'male-only'   : {'m':1.0},
+                       'female-only' : {'f':1.0}}
         else:
             weights = {how:{}}
         if ses not in potential_ses:
@@ -357,10 +363,13 @@ class Test(object):
         if how not in weights:
             l.warning("filtering randomly because {0} not an option.".format(how))
             return u.rand.sample(tweets, limit)
-        if ses == 'random':
+        if ses.lower() == 'random':
             l.info("Randomly downsampling tweets from {0} to {1} per test limit.".format(len(tweets),limit))
             return u.rand.sample(tweets, limit)
-        cur.execute("SELECT fips as fips, {0} as ses from quac_ses".format(ses))
+
+        # Extract county-level demographics from PostgreSQL if filtering to be done on county-level
+        if ses != 'gender' and ses != 'race':
+            cur.execute("SELECT fips as fips, {0} as ses from quac_ses".format(ses))
 
         tweet_bins = {}
 
@@ -372,14 +381,14 @@ class Test(object):
                 weights[how][int(county[0])] = math.ceil(county[1]*limit)
                 counties[int(county[0])] = int(county[0])
         elif ses == 'senate':
-            # TODO: Create this - should set equal tweets per county
+            # Give each county the same number of tweets
             counties = {}
             for county in cur:
                 tweet_bins[int(county[0])] = []
                 weights[how][int(county[0])] = math.ceil(limit / 3109)  # equal distribution across counties
                 counties[int(county[0])] = int(county[0])
         else:
-            # Set limit on a bin basis, not county
+            # Set limit on a bin basis and then later map counties or tweet demographics to their bin
             for category in weights[how]:
                 weights[how][category] = math.ceil(weights[how][category] * limit)
                 tweet_bins[category] = []
@@ -398,13 +407,18 @@ class Test(object):
                     elif county[1] < 40:
                         counties[int(county[0])] = '32-40'
                     else:
-                        counties[int(county[0])] = '40+'
+                        counties[int(county[0])] = '>=40'
                 else:
                     counties[int(county[0])] = county[1]
 
-        for tweet in tweets:
-            if tweet.region_id in counties:
-                tweet_bins[counties[tweet.region_id]].append(tweet)
+        if ses == 'gender':
+            for tweet in tweets:
+                if tweet.gender in tweet_bins:
+                    tweet_bins[tweet.gender].append(tweet)
+        else:
+            for tweet in tweets:
+                if tweet.region_id in counties:
+                    tweet_bins[counties[tweet.region_id]].append(tweet)
 
         final_tweets = []
         for category in tweet_bins:
@@ -463,7 +477,7 @@ class Test(object):
                        '24-27': {'count':0, 'within_county':0, 'within_100km':0},
                        '27-32': {'count':0, 'within_county':0, 'within_100km':0},
                        '32-40': {'count':0, 'within_county':0, 'within_100km':0},
-                         '40+': {'count':0, 'within_county':0, 'within_100km':0}}
+                        '>=40': {'count':0, 'within_county':0, 'within_100km':0}}
         bins['urban'] = {'1' : {'count':0, 'within_county':0, 'within_100km':0},
                          '2' : {'count':0, 'within_county':0, 'within_100km':0},
                          '3' : {'count':0, 'within_county':0, 'within_100km':0},
@@ -497,7 +511,7 @@ class Test(object):
             elif county[1] < 40:
                 counties[int(county[0])]['age'] = '32-40'
             else:
-                counties[int(county[0])]['age'] = '40+'
+                counties[int(county[0])]['age'] = '>=40'
             counties[int(county[0])]['urban'] = str(county[2])
             for property in properties:
                 counties[int(county[0])][property] = []
