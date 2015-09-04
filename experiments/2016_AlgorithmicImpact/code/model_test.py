@@ -525,7 +525,7 @@ class Test(object):
                         bins[ses][counties[tweet.region_id][ses]]['count'] += 1
                     else:
                         bins[ses][getattr(tweet, ses)]['count'] += 1
-                if hasattr(tweet, 'best_point'):  # do I need to count if there are tweets without a best point?
+                if hasattr(tweet, 'best_point') and tweet.best_point:  # do I need to count if there are tweets without a best point?
                     if counties[tweet.region_id]['shape'].contains(tweet.best_point):
                         counties[tweet.region_id]['within_county'] += 1
                         for ses in bins:
@@ -553,6 +553,8 @@ class Test(object):
                                 bins[ses][counties[tweet.region_id][ses]]['within_100km'] += 1
                             else:
                                 bins[ses][getattr(tweet, ses)]['within_100km'] += 1
+                else:
+                    print("No best point: {0}".format(tweet))
                 for property in properties:
                     counties[tweet.region_id][property].append(getattr(tweet, property))
                     for ses in bins:
