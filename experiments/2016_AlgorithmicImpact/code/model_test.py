@@ -67,7 +67,7 @@ def test_tweet(model, fields, tw):
     assert (tw.geom.srid == model.srid)
     if (tw.id % HEARTBEAT_INTERVAL == 0):
         l.debug('testing tweet id %d' % (tw.id))
-    r = Metrics_Tweet(tweet=tw, fields=fields, region_id = tw.region_id, best_point = None)
+    r = Metrics_Tweet(tweet=tw, fields=fields, region_id = tw.region_id, race=tw.race, gender=tw.gender, best_point = None)
     le = model.locate(tw.tokens, 0.50)
     r.location_estimate = le
     if (le is None):
