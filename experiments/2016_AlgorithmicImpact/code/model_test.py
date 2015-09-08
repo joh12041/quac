@@ -207,11 +207,11 @@ class Test(object):
         if self.start.year == 2014:
             self.training_table = "tweet_as_json"
         elif self.start.year == 2015:
-            self.training_table = "tweet_as_json_2015_05_27"
+            self.training_table = "tweet_as_json_15"
         else:
             raise Exception("Start date not in 2014 or 2015 - no tweet data available.")
         if gap > timedelta(30):  # longer than 30-days
-            self.testing_table = "tweet_as_json_2015_05_27"
+            self.testing_table = "tweet_as_json_15"
         
     def __str__(self):
         return str(self.start)
