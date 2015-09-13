@@ -482,6 +482,7 @@ class Test(object):
                    gender=True, race=True):
         ID_FIELD = "FIPS"
 
+        # Different ways of aggregating/reporting the results
         bins = {}
         bins['age'] = {  '<20': {'count':0, 'within_county':0, 'within_100km':0},
                        '20-24': {'count':0, 'within_county':0, 'within_100km':0},
@@ -504,7 +505,13 @@ class Test(object):
                         'w' : {'count':0, 'within_county':0, 'within_100km':0},
                         'n' : {'count':0, 'within_county':0, 'within_100km':0}}
 
-        # Get SES attribute to bin tweet results by (on top of binning by counties)
+        # Initialize ses bins for grouping tweet results
+        for ses in bins.values():
+            for region in ses:
+                for property in properties:  # model performance stats (e.g. ncomponents, simple accuracy error (SAE), etc.)
+                    ses[region][property] = []
+
+        # Get county-level SES attributes to bin tweet results by
         cur.execute("SELECT fips as fips, {0} as age, {1} as urban from quac_ses".format('pct15to34', 'urban'))
 
         # Initialize county bins for grouping tweet results
@@ -527,12 +534,6 @@ class Test(object):
             for property in properties:
                 counties[int(county[0])][property] = []
 
-        # Initialize ses bins for grouping tweet results
-        for ses in bins.values():
-            for region in ses:
-                for property in properties:
-                    ses[region][property] = []
-
         # Load in county geometries for determining if the model's best point falls in the same county as the tweet
         with open(geojsonfn, 'r') as fin:
             county_geom = json.load(fin)
@@ -542,28 +543,30 @@ class Test(object):
         # Loop through tweet results and add them to their respective county and ses bins
         count_matched = 0
         for tweet in tweets:
-            if tweet.region_id in counties:
+            if tweet.region_id in counties:  # this should always be true based on fetch query, but an easy check
                 count_matched += 1
                 counties[tweet.region_id]['count'] += 1
                 for ses in bins:
-                    if ses in counties[tweet.region_id]:
+                    if ses in counties[tweet.region_id]:  # i.e. age or urban
                         bins[ses][counties[tweet.region_id][ses]]['count'] += 1
-                    else:
+                    else:  # i.e. gender or race
                         bins[ses][getattr(tweet, ses)]['count'] += 1
-                if hasattr(tweet, 'best_point') and tweet.best_point:  # do I need to count if there are tweets without a best point?
-                    if counties[tweet.region_id]['shape'].contains(tweet.best_point):
+                if hasattr(tweet, 'best_point') and tweet.best_point:  # find location of model's best guess for tweet location
+                    if counties[tweet.region_id]['shape'].contains(tweet.best_point):  # guess was in correct county
                         counties[tweet.region_id]['within_county'] += 1
                         for ses in bins:
                             if ses in counties[tweet.region_id]:
                                 bins[ses][counties[tweet.region_id][ses]]['within_county'] += 1
                             else:
                                 bins[ses][getattr(tweet, ses)]['within_county'] += 1
+                        # track where the guesses for a county's tweets fall (e.g. it's from San Francisco but the model guessed LA)
                         if tweet.region_id in counties[tweet.region_id]['est_counties']:
                             counties[tweet.region_id]['est_counties'][tweet.region_id]['count'] += 1
                         else:
                             counties[tweet.region_id]['est_counties'][tweet.region_id] = {'count':1}
 
                     else:
+                        # track where the guesses for a county's tweets fall (e.g. it's from San Francisco but the model guessed LA)
                         for county in counties:
                             if counties[county]['shape'].contains(tweet.best_point):
                                 if county in counties[tweet.region_id]['est_counties']:
@@ -571,6 +574,7 @@ class Test(object):
                                 else:
                                     counties[tweet.region_id]['est_counties'][county] = {'count':1}
                                 break
+                    # track whether correct guess fell within 100km - this is an arbitrary distance but reflective of close even if wrong county
                     if tweet.sae < 100:  # km
                         counties[tweet.region_id]['within_100km'] += 1
                         for ses in bins:
@@ -580,6 +584,7 @@ class Test(object):
                                 bins[ses][getattr(tweet, ses)]['within_100km'] += 1
                 else:
                     print("No best point: {0}".format(tweet))
+                # track model properties for each county/bin as well (e.g. ncomponents, cae, sae etc.)
                 for property in properties:
                     counties[tweet.region_id][property].append(getattr(tweet, property))
                     for ses in bins:
@@ -589,6 +594,7 @@ class Test(object):
                             bins[ses][getattr(tweet, ses)][property].append(getattr(tweet, property))
         l.info('{0} out of {1} tweets matched via region_id.'.format(count_matched, len(tweets)))
 
+        # Compute mean, median, 1st quartile, 3rd quartile, and StDev for each property by county/bin
         for fips in counties:
             for property in properties:
                 if counties[fips]['count'] > 0:
@@ -620,6 +626,7 @@ class Test(object):
                         ses[region]['sd_' + property] = None
 
 
+        # write out county-specific results
         with open(outputname, 'w') as fout:
             csvwriter = csv.writer(fout)
             header = [ID_FIELD, 'count_tweets', 'within_county', 'within_100km']
@@ -641,10 +648,9 @@ class Test(object):
                 csvwriter.writerow(line)
         l.info("Output county stats to {0}".format(outputname))
 
+        # write out binned results
         with open(outputname.replace(".csv","_binned.csv"), 'w') as fout:
             csvwriter = csv.writer(fout)
-            header[0] = 'class'
-            csvwriter.writerow(header)
             for ses in bins:
                 header[0] = ses
                 csvwriter.writerow(header)
