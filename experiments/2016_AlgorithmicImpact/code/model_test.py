@@ -357,7 +357,7 @@ class Test(object):
                          'rural1' : {1:0.273, 2:0.222, 3:0.184, 4:0.083, 5:0.131, 6:0.108},
                          'urbanf' : {1:0.420, 2:0.333, 3:0.250, 4:0.000, 5:0.000, 6:0.000},
                          'ruralf' : {1:0.000, 2:0.000, 3:0.000, 4:0.250, 5:0.333, 6:0.420}}
-        elif ses == 'pct15to34':  # By county, <20 = <20% of people between ages 15-34, >=40 = >=40% of people between ages 15-34
+        elif ses == 'pct15to34':  # By county, <20 := <20% of people between ages 15-34, >=40 := >=40% of people between ages 15-34
             weights = {'balanced' : {'<20':0.021, '20-24':0.171, '24-27':0.282, '27-32':0.430, '32-40':0.083, '>=40':0.014},
                        'expected' : {'<20':0.008, '20-24':0.109, '24-27':0.248, '27-32':0.475, '32-40':0.133, '>=40':0.027},
                          'younger': {'<20':0.000, '20-24':0.000, '24-27':0.000, '27-32':0.000, '32-40':0.000, '>=40':0.000},
@@ -366,7 +366,7 @@ class Test(object):
             weights = {'balanced'    : {'m':0.5, 'f':0.5},
                        'male-only'   : {'m':1.0},
                        'female-only' : {'f':1.0}}
-        else:
+        else:  # for county-level attributes that aren't binned
             weights = {how:{}}
         if ses not in potential_ses:
             l.warning("filtering randomly because {0} not in {1}.".format(ses, potential_ses))
@@ -406,7 +406,7 @@ class Test(object):
 
             counties = {}
             for county in cur:
-                if ses == 'pct15to34':
+                if ses == 'pct15to34':  # assign counties their respective age bin
                     if county[1] < 20:
                         counties[int(county[0])] = '<20'
                     elif county[1] < 24:
@@ -419,7 +419,7 @@ class Test(object):
                         counties[int(county[0])] = '32-40'
                     else:
                         counties[int(county[0])] = '>=40'
-                else:
+                else:  # copy over bin from PostgreSQL query
                     counties[int(county[0])] = county[1]
 
         if ses == 'gender':
@@ -729,6 +729,7 @@ class Test(object):
                                         'cae', 'sae',
                                         'contour', 'pra50', 'pra90', 'pra95',
                                         'covt95', 'covt90', 'covt50'])
+        # Generally all tweets are successfully given an estimate by the models, but on occasion there are a few that can't be estimated
         if losses:
             try:
                 self.map_tweets(losses, "{0}/test_failed_tweets_{1}.csv".format(outputdir, self.i),
