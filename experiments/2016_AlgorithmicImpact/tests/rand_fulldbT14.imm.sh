@@ -8,17 +8,16 @@ model-test \
     --min-instances 3 \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
-    --test-tweet-limit 200 \
+    --test-tweet-limit 120000 \
     --start $START \
     --end $END \
     --training P1D \
     --testing P1D \
-    --stride P2D \
+    --stride P28D \
     --cores $CORE_CT \
     --skip-small-tests 0 \
-    --limit 1 \
     --verbose \
-    --ses pop_pct \
-    --how_filter balanced \
-    $GEODB $JOBDIR/model_testing
-
+    --ses random \
+    --how_filter random \
+    --filter_testing True \
+    $GEODB $JOBDIR/rand_te120k_fulldbT14

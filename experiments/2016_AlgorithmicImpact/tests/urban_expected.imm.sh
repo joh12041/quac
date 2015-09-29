@@ -8,15 +8,15 @@ model-test \
     --min-instances 3 \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
-    --test-tweet-limit 60000 \
+    --test-tweet-limit 120000 \
     --start $START \
     --end $END \
-    --training P8D \
-    --testing P12D \
-    --stride P20D \
+    --training P1D \
+    --testing P2D \
+    --stride P28D \
     --cores $CORE_CT \
     --skip-small-tests 0 \
     --verbose \
     --ses urban \
     --how_filter Random \
-    $GEODB $JOBDIR/urban_random_60000
+    $GEODB $JOBDIR/random_test120k_fulldbt14

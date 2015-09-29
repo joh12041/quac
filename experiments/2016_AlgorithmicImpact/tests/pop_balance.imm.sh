@@ -19,4 +19,5 @@ model-test \
     --verbose \
     --ses pop_pct \
     --how_filter balanced \
-    $GEODB $JOBDIR/pop_balance_120000
+    --filter_testing True \
+    $GEODB $JOBDIR/pop_balance_120000_balancetesting

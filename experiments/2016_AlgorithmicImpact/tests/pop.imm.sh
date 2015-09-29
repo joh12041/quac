@@ -19,6 +19,7 @@ model-test \
     --verbose \
     --ses random \
     --how_filter expected \
+    --filter_testing False \
     $GEODB $JOBDIR/pop_random_120k
 
 model-test \
@@ -36,5 +37,6 @@ model-test \
     --verbose \
     --ses pop_pct \
     --how_filter balanced \
+    --filter_testing False \
     $GEODB $JOBDIR/pop_balanced_120k
 
