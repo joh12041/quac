@@ -172,7 +172,12 @@ gr.add_argument('--test-tweet-limit',
                 metavar='N',
                 type=int,
                 default=2000,
-                help='use random sample of N tweets for testing')
+                help='use sample of N tweets for testing')
+gr.add_argument('--train-tweet-limit',
+                metavar='N',
+                type=int,
+                default=30000,
+                help='use sample of N tweets for training')
 gr.add_argument('--dup-users',
                 action='store_true',
                 help='use all tweets from user, not just the first')
@@ -246,6 +251,7 @@ gr.add_argument('--how_filter',
                 default='',
                 help='how to adjust ses balance in resampling of training data.')
 gr.add_argument('--filter_testing',
+                type=lambda s: bool(int(s)),
                 default=False,
                 help='Set to True to filter testing tweets by SES as well')
 

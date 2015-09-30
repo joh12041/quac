@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is the basic configuration
+# Train on random 30k, test on random 120k as baseline
 
 . $(dirname $0)/parseargs.sh
 
@@ -9,15 +9,18 @@ model-test \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
     --test-tweet-limit 120000 \
+    --train-tweet-limit 30000 \
     --start $START \
     --end $END \
-    --training P8D \
-    --testing P18D \
-    --stride P26D \
+    --training P4D \
+    --testing P6D \
+    --gap P1D \
+    --stride P10D \
     --cores $CORE_CT \
+    --limit 1 \
     --skip-small-tests 0 \
     --verbose \
-    --ses pop_pct \
-    --how_filter balanced \
-    --filter_testing True \
-    $GEODB $JOBDIR/pop_balance_120000_balancetesting
+    --ses random \
+    --how_filter random \
+    --filter_testing 0 \
+    $GEODB $JOBDIR/tr_rand30k_te_rand120k

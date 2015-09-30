@@ -309,12 +309,20 @@ class Test(object):
                 table = self.training_table
             elif phase == 'testing':
                 table = self.testing_table
-            cur.execute(
-                "SELECT id as tweet_id, created_at as created_at, text as text, "
-                "user_screen_name as user_screen_name, user_description as user_description, user_lang as user_lang, "
-                "user_location as user_location, user_time_zone as user_time_zone, lat as lat, lon as lon, "
-                "geotagged as geom_src, county_fips as region_id, gender as gender, race as race "
-                "FROM {0} WHERE {1} AND county_fips IS NOT NULL".format(table, self.where(phase, 'created_at')))
+            if args.ses == 'localness':
+                cur.execute(
+                    "SELECT id as tweet_id, created_at as created_at, text as text, "
+                    "user_screen_name as user_screen_name, user_description as user_description, user_lang as user_lang, "
+                    "user_location as user_location, user_time_zone as user_time_zone, lat as lat, lon as lon, "
+                    "geotagged as geom_src, county_fips as region_id, gender as gender, race as race "
+                    "FROM {0} WHERE {1} AND nday is true".format(table, self.where(phase, 'created_at')))
+            else:
+                cur.execute(
+                    "SELECT id as tweet_id, created_at as created_at, text as text, "
+                    "user_screen_name as user_screen_name, user_description as user_description, user_lang as user_lang, "
+                    "user_location as user_location, user_time_zone as user_time_zone, lat as lat, lon as lon, "
+                    "geotagged as geom_src, county_fips as region_id, gender as gender, race as race "
+                    "FROM {0} WHERE {1} AND county_fips IS NOT NULL".format(table, self.where(phase, 'created_at')))
             rows = cur.fetchall()
         except:
             l.info("tweet selection from db failed")
@@ -331,7 +339,7 @@ class Test(object):
                 users.add(tw.user_screen_name)
                 tweets.append(tw)
         if phase == "training":
-            tweets = self.filter_geometry(tweets, args.ses, cur, args.how_filter, 45000)  # downsample to 30000 per Reid's paper
+            tweets = self.filter_geometry(tweets, args.ses, cur, args.how_filter, args.train_tweet_limit)
             users = set()
             for tw in tweets:
                users.add(tw.user_screen_name)

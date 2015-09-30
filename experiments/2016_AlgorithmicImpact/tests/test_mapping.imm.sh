@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This is the basic configuration
+# Test mapping on 200 tweets (fast)
 
 . $(dirname $0)/parseargs.sh
 
@@ -9,16 +9,18 @@ model-test \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
     --test-tweet-limit 200 \
+    --train-tweet-limit 1000 \
     --start $START \
     --end $END \
     --training P1D \
     --testing P1D \
+    --gap P1D \
     --stride P2D \
     --cores $CORE_CT \
-    --skip-small-tests 0 \
     --limit 1 \
+    --skip-small-tests 0 \
     --verbose \
-    --ses pop_pct \
-    --how_filter balanced \
-    $GEODB $JOBDIR/model_testing
-
+    --ses random \
+    --how_filter random \
+    --filter_testing 0 \
+    $GEODB $JOBDIR/testing_temp_delete
