@@ -592,8 +592,6 @@ class Test(object):
                                 bins[ses][counties[tweet.region_id][ses]]['within_100km'] += 1
                             else:
                                 bins[ses][getattr(tweet, ses)]['within_100km'] += 1
-                else:
-                    print("No best point: {0}".format(tweet))
                 # track model properties for each county/bin as well (e.g. ncomponents, cae, sae etc.)
                 for property in properties:
                     counties[tweet.region_id][property].append(getattr(tweet, property))
