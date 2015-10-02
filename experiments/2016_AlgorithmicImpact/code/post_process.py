@@ -58,10 +58,13 @@ def generate_counties_to_ct_dict(geometries_fn):
                 predom_race = 'none'
                 count_predomraces['total'] += 1
                 for race in race_cols:
-                    if float(ct['properties'][race_cols[race]]) / totalpop >= 0.9:
-                        predom_race = race
-                        count_predomraces[race] += 1
-                        break
+                    try:
+                        if float(ct['properties'][race_cols[race]]) / totalpop >= 0.9:
+                            predom_race = race
+                            count_predomraces[race] += 1
+                            break
+                    except:
+                        continue
                 ct_to_atts[fips]['pop'] = totalpop
                 ct_to_atts[fips]['predom_race'] = predom_race
         print('CTs assigned a race: {0}'.format(count_predomraces))
