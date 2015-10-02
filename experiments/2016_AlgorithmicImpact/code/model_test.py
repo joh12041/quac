@@ -246,6 +246,7 @@ class Test(object):
         # downsample test tweets
         if (len(te_tweets) > args.test_tweet_limit):
             if args.filter_testing:
+                raise Exception
                 te_tweets = self.filter_geometry(te_tweets, args.ses, cur, args.how_filter, args.test_tweet_limit)
             else:
                 te_tweets = self.filter_geometry(te_tweets, 'random', cur, '', args.test_tweet_limit)
