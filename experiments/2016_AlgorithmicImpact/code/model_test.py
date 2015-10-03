@@ -390,8 +390,10 @@ class Test(object):
             return u.rand.sample(tweets, limit)
 
         # Extract county-level demographics from PostgreSQL if filtering to be done on county-level
-        if ses != 'gender' and ses != 'race':
+        if ses != 'gender' and ses != 'race' and ses != 'senate':
             cur.execute("SELECT fips as fips, {0} as ses from quac_ses".format(ses))
+        elif ses == 'senate':
+            cur.execute("SELECT fips as fips from quac_ses")
 
         tweet_bins = {}
 
