@@ -75,7 +75,7 @@ def generate_counties_to_ct_dict(geometries_fn):
 
         counties = {}
         for county in counties_gj['features']:
-            fips = county['property']['FIPS']
+            fips = county['properties']['FIPS']
             counties[fips] = {'shape':shape(county['geometry']), 'ct':[]}
             for ct in ct_gj['features']:
                 ct_county = ct['properties']['STATE_FIPS'] + ct['properties']['CNTY_FIPS']
