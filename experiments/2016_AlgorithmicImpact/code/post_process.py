@@ -12,6 +12,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('results_folder',
                     help='folder containing pickled results objects')
+    ap.add_argument('output_user_csv',
+                    help='path to csv containing users from this model, their cae, and predication area')
     args = ap.parse_args()
 
     geometries_fn = "/export/scratch2/isaacj/geometries/county_ct_mapping"
@@ -49,7 +51,8 @@ def generate_counties_to_ct_dict(geometries_fn):
         ct_race_pop_fn = "/export/scratch2/isaacj/geometries/us_ct_raceetc.geojson"
         with open(ct_race_pop_fn, 'r') as fin:
             ct_gj = json.load(fin)
-        race_cols = {'white':'DP0080003', 'black':'DP0080004', 'asian':'DP0080006', 'hisp_lat':'DP0100002'}
+        # NOTE: hisp_lat and white are no exclusive - we test hisp_lat first and so favor a CT = hisp_lat over that CT = white
+        race_cols = [('hisp_lat','DP0100002'), ('white','DP0080003'), ('black','DP0080004'), ('asian','DP0080006')]
         count_predomraces = {'white':0, 'black':0, 'asian':0, 'hisp_lat':0, 'total':0}
         for ct in ct_gj['features']:
             fips = ct['properties']['GEOID10']
@@ -59,9 +62,9 @@ def generate_counties_to_ct_dict(geometries_fn):
                 count_predomraces['total'] += 1
                 for race in race_cols:
                     try:
-                        if float(ct['properties'][race_cols[race]]) / totalpop >= 0.9:
-                            predom_race = race
-                            count_predomraces[race] += 1
+                        if float(ct['properties'][race[1]]) / totalpop >= 0.9:
+                            predom_race = race[0]
+                            count_predomraces[race[0]] += 1
                             break
                     except:
                         continue
