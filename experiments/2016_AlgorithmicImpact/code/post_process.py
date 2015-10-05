@@ -10,22 +10,76 @@ from shapely.geometry import shape
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('results_folder',
+    ap.add_argument('results_folders',
+                    nargs='+',
                     help='folder containing pickled results objects')
     ap.add_argument('output_user_csv',
                     help='path to csv containing users from this model, their cae, and predication area')
+    ap.add_argument('compare_user_confidence',
+                    type=int,
+                    default=0,
+                    help='folder containing pickled results objects')
     args = ap.parse_args()
 
     geometries_fn = "/export/scratch2/isaacj/geometries/county_ct_mapping"
     counties = generate_counties_to_ct_dict(geometries_fn)
 
-    fns = os.listdir(args.results_folder)
-    for fn in fns:
-        if u.PICKLE_SUFFIX in fn and 'results' in fn:
-            tweets = u.pickle_load(fn)
-            for tweet_result in tweets:
-                le = tweet_result.location_estimate
-                mp = le.pred_region
+    if args.compare_user_confidence:
+        assert len(args.results_folder) == 2, "If comparing model results, can only compare between two models right now"
+        filenames = []
+        for folder in args.results_folder:
+            folder_fns = []
+            fns = os.listdir(folder)
+            for fn in fns:
+                if u.PICKLE_SUFFIX in fn and 'results' in fn:
+                    folder_fns.append(folder + fn)
+            filenames.append(folder_fns)
+        compare_user_confidence_results(filenames)
+
+    for folder in args.results_folder:
+        fns = os.listdir(folder)
+        for fn in fns:
+            users = []
+            if u.PICKLE_SUFFIX in fn and 'results' in fn:
+                tweets = u.pickle_load(folder + fn)
+                for tweet_result in tweets:
+                    username = tweet_result.tweet.user_screen_name
+                    tid = tweet_result.tweet.id
+                    pa95 = tweet_result.location_estimate.pred_area
+                    sae = tweet_result.sae
+                    users.append([username, tid, pa95, sae])
+
+def compare_user_confidence_results(filenames):
+    users = {}
+    for fn in filenames[0]:
+        tweets = u.pickle_load(fn)
+        for tweet_result in tweets:
+            username = tweet_result.tweet.user_screen_name
+            tid = tweet_result.tweet.id
+            pa95 = tweet_result.location_estimate.pred_area
+            sae = tweet_result.sae
+            if (username, tid) in users:
+                if sae < users[(username, tid)][1]:
+                    users[(username, tid)] = (pa95, sae)
+            else:
+                users[(username, tid)] = (pa95, sae)
+    agreed = 0
+    disagreed = 0
+    for fn in filenames[1]:
+        tweets = u.pickle_load(fn)
+        for tweet_result in tweets:
+            username = tweet_result.tweet.user_screen_name
+            tid = tweet_result.tweet.id
+            if (username, tid) in users:
+                pa95_smaller = tweet_result.location_estimate.pred_area < users[(username, tid)][0]
+                sae_smaller = tweet_result.sae < users[(username, tid)][1]
+                if pa95_smaller and sae_smaller:
+                    agreed += 1
+                elif not pa95_smaller and not sae_smaller:
+                    agreed += 1
+                else:
+                    disagreed += 1
+    print("{0} tweets lined up with a smaller 95% prediction area = smaller sae between models and {1} disagreed.".format(agreed, disagreed))
 
 
 def generate_counties_to_ct_dict(geometries_fn):
@@ -106,4 +160,4 @@ def generate_counties_to_ct_dict(geometries_fn):
 
 
 if __name__ == "__main__":
-    generate_counties_to_ct_dict('/export/scratch2/isaacj/geometries/county_ct_mapping')
+    compare_user_confidence_results([['data/geo/tr_urbanonly30k_te_rand120k/results.0.pkl.gz'],['data/geo/tr_ruralonly30k_te_rand120k/results.0.pkl.gz']])
