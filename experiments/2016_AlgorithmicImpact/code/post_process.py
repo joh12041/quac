@@ -55,7 +55,7 @@ def generate_counties_to_ct_dict(geometries_fn):
             fips = ct['properties']['GEOID10']
             if fips in ct_to_atts:
                 totalpop = int(ct['properties']['DP0010001'])
-                predom_race = 'none'
+                predom_race = None
                 count_predomraces['total'] += 1
                 for race in race_cols:
                     try:
@@ -74,6 +74,8 @@ def generate_counties_to_ct_dict(geometries_fn):
             ct_gj = json.load(fin)
 
         counties = {}
+        count_skipped = 0
+        count_processed = 0
         for county in counties_gj['features']:
             fips = county['properties']['FIPS']
             counties[fips] = {'shape':shape(county['geometry']), 'ct':[]}
@@ -81,12 +83,20 @@ def generate_counties_to_ct_dict(geometries_fn):
                 ct_county = ct['properties']['STATE_FIPS'] + ct['properties']['CNTY_FIPS']
                 ct_fips = ct['properties']['FIPS']
                 if ct_county == fips:
-                    counties[fips]['ct'].append({'shape' : shape(ct['geometry']),
-                                                 'pop' : ct_to_atts[ct_fips]['pop'],
-                                                 'hmi' : ct_to_atts[ct_fips]['hmi'],
-                                                 'race' : ct_to_atts[ct_fips]['predom_race']})
+                    try:
+                        counties[fips]['ct'].append({'shape' : shape(ct['geometry']),
+                                                     'pop' : ct_to_atts[ct_fips]['pop'],
+                                                     'hmi' : ct_to_atts[ct_fips]['hmi'],
+                                                     'race' : ct_to_atts[ct_fips]['predom_race']})
+                    except:
+                        count_skipped += 1
+                        continue
+            count_processed += 1
+            if count_processed % 100 == 0:
+                print("{0} counties processed.".format(count_processed))
 
         u.pickle_dump(geometries_fn, counties)
+        print("{0} skipped out of {1}".format(count_skipped, len(ct_gj['features'])))
         return counties
     else:
         return u.pickle_load(geometries_fn)
