@@ -85,8 +85,8 @@ def compare_user_confidence_results(filenames):
     print("{0} tweets lined up with a smaller 95% prediction area = smaller sae between models and {1} disagreed.".format(agreed, disagreed))
     print("{0} median difference in SAE for disagreements.".format(numpy.median(distance_disagreed)))
     print("{0} average difference in SAE for disagreements.".format(numpy.average(distance_disagreed)))
-    print("{0} 1st quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 0.25)))
-    print("{0} 3rd quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 0.75)))
+    print("{0} 1st quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 25)))
+    print("{0} 3rd quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 75)))
 
 def generate_counties_to_ct_dict(geometries_fn):
     if not os.path.exists(geometries_fn + u.PICKLE_SUFFIX):
