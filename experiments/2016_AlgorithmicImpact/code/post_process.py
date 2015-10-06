@@ -6,6 +6,7 @@ import u
 import csv
 import json
 from shapely.geometry import shape
+import numpy
 #from django.contrib.gis import geos
 
 def main():
@@ -65,6 +66,7 @@ def compare_user_confidence_results(filenames):
                 users[(username, tid)] = (pa95, sae)
     agreed = 0
     disagreed = 0
+    distance_disagreed = []
     for fn in filenames[1]:
         tweets = u.pickle_load(fn)
         for tweet_result in tweets:
@@ -79,8 +81,12 @@ def compare_user_confidence_results(filenames):
                     agreed += 1
                 else:
                     disagreed += 1
+                    distance_disagreed.append(abs(tweet_result.sae - users[(username, tid)][1]))
     print("{0} tweets lined up with a smaller 95% prediction area = smaller sae between models and {1} disagreed.".format(agreed, disagreed))
-
+    print("{0} median difference in SAE for disagreements.".format(numpy.median(distance_disagreed)))
+    print("{0} average difference in SAE for disagreements.".format(numpy.average(distance_disagreed)))
+    print("{0} 1st quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 0.25)))
+    print("{0} 3rd quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 0.75)))
 
 def generate_counties_to_ct_dict(geometries_fn):
     if not os.path.exists(geometries_fn + u.PICKLE_SUFFIX):
