@@ -140,6 +140,7 @@ def generate_counties_to_ct_dict(geometries_fn):
         counties = {}
         count_skipped = 0
         count_processed = 0
+        cts_added = 0
         for county in counties_gj['features']:
             fips = county['properties']['FIPS']
             counties[fips] = {'shape':shape(county['geometry']), 'ct':[]}
@@ -152,15 +153,15 @@ def generate_counties_to_ct_dict(geometries_fn):
                                                      'pop' : ct_to_atts[ct_fips]['pop'],
                                                      'hmi' : ct_to_atts[ct_fips]['hmi'],
                                                      'race' : ct_to_atts[ct_fips]['predom_race']})
-                        print(counties[fips]['ct'])
+                        cts_added += 1
                     except Exception:
                         count_skipped += 1
             count_processed += 1
             if count_processed % 100 == 0:
-                print("{0} counties processed and {1} skipped.".format(count_processed, count_skipped))
+                print("{0} counties processed and {1} CTs skipped and {2} added.".format(count_processed, count_skipped, cts_added))
 
         u.pickle_dump(geometries_fn, counties)
-        print("{0} skipped out of {1}".format(count_skipped, len(ct_gj['features'])))
+        print("{0} skipped out of {1} and {2} added".format(count_skipped, len(ct_gj['features']), cts_added))
         return counties
     else:
         return u.pickle_load(geometries_fn)
