@@ -8,6 +8,7 @@ import json
 from shapely.geometry import shape
 import numpy
 #from django.contrib.gis import geos
+import traceback
 
 def main():
     ap = argparse.ArgumentParser()
@@ -152,8 +153,14 @@ def generate_counties_to_ct_dict(geometries_fn):
                                                      'hmi' : ct_to_atts[ct_fips]['hmi'],
                                                      'race' : ct_to_atts[ct_fips]['predom_race']})
                     except:
-                        count_skipped += 1
-                        continue
+                        try:
+                            count_skipped += 1
+                            traceback.print_exc()
+                            print(ct_county, fips, ct_county == fips)
+                            print(ct_to_atts[ct_fips])
+                            continue
+                        except:
+                            traceback.print_exc()
             count_processed += 1
             if count_processed % 100 == 0:
                 print("{0} counties processed.".format(count_processed))
