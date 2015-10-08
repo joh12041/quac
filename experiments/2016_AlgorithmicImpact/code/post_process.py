@@ -152,15 +152,9 @@ def generate_counties_to_ct_dict(geometries_fn):
                                                      'pop' : ct_to_atts[ct_fips]['pop'],
                                                      'hmi' : ct_to_atts[ct_fips]['hmi'],
                                                      'race' : ct_to_atts[ct_fips]['predom_race']})
+                        print(counties[fips]['ct'])
                     except:
-                        try:
-                            count_skipped += 1
-                            traceback.print_exc()
-                            print(ct_county, fips, ct_county == fips)
-                            print(ct_to_atts[ct_fips])
-                            continue
-                        except:
-                            traceback.print_exc()
+                        count_skipped += 1
             count_processed += 1
             if count_processed % 100 == 0:
                 print("{0} counties processed.".format(count_processed))
