@@ -102,6 +102,8 @@ def generate_counties_to_ct_dict(geometries_fn):
             assert next(csvreader) == ['ID','County_FIPS','Name','HMI_ACS5YR2013']
             for line in csvreader:
                 ct = line[0]
+                if len(ct) == 10:
+                    ct = '0' + ct
                 try:
                     hmi = int(line[3])
                 except:
