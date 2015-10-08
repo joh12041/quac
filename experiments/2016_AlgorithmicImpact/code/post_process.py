@@ -153,11 +153,11 @@ def generate_counties_to_ct_dict(geometries_fn):
                                                      'hmi' : ct_to_atts[ct_fips]['hmi'],
                                                      'race' : ct_to_atts[ct_fips]['predom_race']})
                         print(counties[fips]['ct'])
-                    except:
+                    except Exception:
                         count_skipped += 1
             count_processed += 1
             if count_processed % 100 == 0:
-                print("{0} counties processed.".format(count_processed))
+                print("{0} counties processed and {1} skipped.".format(count_processed, count_skipped))
 
         u.pickle_dump(geometries_fn, counties)
         print("{0} skipped out of {1}".format(count_skipped, len(ct_gj['features'])))
