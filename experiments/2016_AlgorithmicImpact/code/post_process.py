@@ -173,4 +173,5 @@ def generate_counties_to_ct_dict(geometries_fn):
 
 
 if __name__ == "__main__":
-    compare_user_confidence_results([['data/geo/tr_urbanonly30k_te_rand120k/results.0.pkl.gz'],['data/geo/tr_ruralonly30k_te_rand120k/results.0.pkl.gz']])
+    #compare_user_confidence_results([['data/geo/tr_urbanonly30k_te_rand120k/results.0.pkl.gz'],['data/geo/tr_ruralonly30k_te_rand120k/results.0.pkl.gz']])
+    generate_counties_to_ct_dict("/export/scratch2/isaacj/geometries/county_ct_mapping")
