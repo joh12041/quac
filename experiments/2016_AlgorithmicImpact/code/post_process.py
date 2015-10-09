@@ -52,48 +52,51 @@ def main():
                     users.append([username, tid, pa95, sae])
 
 def compare_user_confidence_results():
-    to_compare = ['rural','urban']
-    folders = ['/export/scratch2/isaacj/Johnson_quac/data/geo/tr_{0}only30k_te_rand120k'.format(tc) for tc in to_compare]
-    first = [os.path.join(folders[0], f) for f in os.listdir(folders[0]) if 'results' in f and u.PICKLE_SUFFIX in f]
-    second = [os.path.join(folders[1], f) for f in os.listdir(folders[1]) if 'results' in f and u.PICKLE_SUFFIX in f]
-    users = {}
-    for fn in first:
-        tweets = u.pickle_load(fn)
-        for tweet_result in tweets:
-            if tweet_result.location_estimate:
+    groups = [['rural','urban'],['male','female']]
+    for to_compare in groups:
+        folders = ['/export/scratch2/isaacj/Johnson_quac/data/geo/tr_{0}only30k_te_rand120k'.format(tc) for tc in to_compare]
+        first = [os.path.join(folders[0], f) for f in os.listdir(folders[0]) if 'results' in f and u.PICKLE_SUFFIX in f]
+        second = [os.path.join(folders[1], f) for f in os.listdir(folders[1]) if 'results' in f and u.PICKLE_SUFFIX in f]
+        users = {}
+        print("Loading in {0} results.".format(to_compare[0]))
+        for fn in first:
+            tweets = u.pickle_load(fn)
+            for tweet_result in tweets:
+                if tweet_result.location_estimate:
+                    username = tweet_result.tweet.user_screen_name
+                    tid = tweet_result.tweet.id
+                    pa95 = tweet_result.location_estimate.pred_area
+                    sae = tweet_result.cae
+                    if (username, tid) in users:
+                        if sae < users[(username, tid)][1]:
+                            users[(username, tid)] = (pa95, sae)
+                    else:
+                        users[(username, tid)] = (pa95, sae)
+        agreed = 0
+        disagreed = 0
+        distance_disagreed = []
+        print("Loading in {0} results.".format(to_compare[1]))
+        for fn in second:
+            tweets = u.pickle_load(fn)
+            for tweet_result in tweets:
                 username = tweet_result.tweet.user_screen_name
                 tid = tweet_result.tweet.id
-                pa95 = tweet_result.location_estimate.pred_area
-                sae = tweet_result.cae
                 if (username, tid) in users:
-                    if sae < users[(username, tid)][1]:
-                        users[(username, tid)] = (pa95, sae)
-                else:
-                    users[(username, tid)] = (pa95, sae)
-    agreed = 0
-    disagreed = 0
-    distance_disagreed = []
-    for fn in second:
-        tweets = u.pickle_load(fn)
-        for tweet_result in tweets:
-            username = tweet_result.tweet.user_screen_name
-            tid = tweet_result.tweet.id
-            if (username, tid) in users:
-                if tweet_result.location_estimate:
-                    pa95_smaller = tweet_result.location_estimate.pred_area < users[(username, tid)][0]
-                    sae_smaller = tweet_result.cae < users[(username, tid)][1]
-                    if pa95_smaller and sae_smaller:
-                        agreed += 1
-                    elif not pa95_smaller and not sae_smaller:
-                        agreed += 1
-                    else:
-                        disagreed += 1
-                        distance_disagreed.append(abs(tweet_result.cae - users[(username, tid)][1]))
-    print("{0} tweets lined up with a smaller 95% prediction area = smaller sae between models and {1} disagreed.".format(agreed, disagreed))
-    print("{0} median difference in SAE for disagreements.".format(numpy.median(distance_disagreed)))
-    print("{0} average difference in SAE for disagreements.".format(numpy.average(distance_disagreed)))
-    print("{0} 1st quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 25)))
-    print("{0} 3rd quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 75)))
+                    if tweet_result.location_estimate:
+                        pa95_smaller = tweet_result.location_estimate.pred_area < users[(username, tid)][0]
+                        sae_smaller = tweet_result.cae < users[(username, tid)][1]
+                        if pa95_smaller and sae_smaller:
+                            agreed += 1
+                        elif not pa95_smaller and not sae_smaller:
+                            agreed += 1
+                        else:
+                            disagreed += 1
+                            distance_disagreed.append(abs(tweet_result.cae - users[(username, tid)][1]))
+        print("{0} tweets lined up with a smaller 95% prediction area = smaller sae between models and {1} disagreed.".format(agreed, disagreed))
+        print("{0} median difference in SAE for disagreements.".format(numpy.median(distance_disagreed)))
+        print("{0} average difference in SAE for disagreements.".format(numpy.average(distance_disagreed)))
+        print("{0} 1st quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 25)))
+        print("{0} 3rd quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 75)))
 
 def generate_counties_to_ct_dict(geometries_fn):
     if not os.path.exists(geometries_fn + u.PICKLE_SUFFIX):
