@@ -7,9 +7,6 @@ import csv
 import json
 from shapely.geometry import shape
 import numpy
-import collections
-#from django.contrib.gis import geos
-import traceback
 
 def main():
     ap = argparse.ArgumentParser()
@@ -247,7 +244,7 @@ def aggregate_results():
                       'count_wi_county','count_wi_100km','pct_wi_county','pct_wi_100km']
             csvwriter = csv.DictWriter(fout, fieldnames=header)
             csvwriter.writeheader()
-            od = collections.OrderedDict(sorted(counties.items()))
+            od = {k:counties[k] for k in sorted(counties, key=int)}
             for fips in od:
                 csvwriter.writerow(od[fips])
 
