@@ -321,5 +321,7 @@ def aggregate_results():
 
 if __name__ == "__main__":
     #generate_counties_to_ct_dict("/export/scratch2/isaacj/geometries/county_ct_mapping")
+    print("Aggregating results.")
     aggregate_results()
+    print("Comparing urban vs. rural models.")
     compare_user_confidence_results()
