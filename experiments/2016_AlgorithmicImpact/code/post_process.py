@@ -64,7 +64,7 @@ def compare_user_confidence_results():
                 username = tweet_result.tweet.user_screen_name
                 tid = tweet_result.tweet.id
                 pa95 = tweet_result.location_estimate.pred_area
-                sae = tweet_result.sae
+                sae = tweet_result.cae
                 if (username, tid) in users:
                     if sae < users[(username, tid)][1]:
                         users[(username, tid)] = (pa95, sae)
@@ -81,14 +81,14 @@ def compare_user_confidence_results():
             if (username, tid) in users:
                 if tweet_result.location_estimate:
                     pa95_smaller = tweet_result.location_estimate.pred_area < users[(username, tid)][0]
-                    sae_smaller = tweet_result.sae < users[(username, tid)][1]
+                    sae_smaller = tweet_result.cae < users[(username, tid)][1]
                     if pa95_smaller and sae_smaller:
                         agreed += 1
                     elif not pa95_smaller and not sae_smaller:
                         agreed += 1
                     else:
                         disagreed += 1
-                        distance_disagreed.append(abs(tweet_result.sae - users[(username, tid)][1]))
+                        distance_disagreed.append(abs(tweet_result.cae - users[(username, tid)][1]))
     print("{0} tweets lined up with a smaller 95% prediction area = smaller sae between models and {1} disagreed.".format(agreed, disagreed))
     print("{0} median difference in SAE for disagreements.".format(numpy.median(distance_disagreed)))
     print("{0} average difference in SAE for disagreements.".format(numpy.average(distance_disagreed)))
