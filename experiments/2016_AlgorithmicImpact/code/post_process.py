@@ -7,6 +7,7 @@ import csv
 import json
 from shapely.geometry import shape
 import numpy
+import collections
 #from django.contrib.gis import geos
 import traceback
 
@@ -246,8 +247,9 @@ def aggregate_results():
                       'count_wi_county','count_wi_100km','pct_wi_county','pct_wi_100km']
             csvwriter = csv.DictWriter(fout, fieldnames=header)
             csvwriter.writeheader()
-            for fips in counties:
-                csvwriter.writerow(counties[fips])
+            od = collections.OrderedDict(sorted(counties.items()))
+            for fips in od:
+                csvwriter.writerow(od[fips])
 
         bins = {}
         bin_headers_idx0 = ['age','race','urban','gender']
@@ -326,5 +328,5 @@ if __name__ == "__main__":
     #generate_counties_to_ct_dict("/export/scratch2/isaacj/geometries/county_ct_mapping")
     print("Aggregating results.")
     aggregate_results()
-    print("Comparing urban vs. rural models.")
+    print("Comparing opposite models.")
     compare_user_confidence_results()
