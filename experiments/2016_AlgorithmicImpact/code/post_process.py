@@ -51,9 +51,13 @@ def main():
                     sae = tweet_result.sae
                     users.append([username, tid, pa95, sae])
 
-def compare_user_confidence_results(filenames):
+def compare_user_confidence_results():
+    to_compare = ['rural','urban']
+    folders = ['/export/scratch2/isaacj/Johnson_quac/data/geo/tr_{0}only30k_te_rand120k'.format(tc) for tc in to_compare]
+    first = [os.path.join(folders[0], f) for f in os.listdir(folders[0]) if 'results' in f and u.PICKLE_SUFFIX in f]
+    second = [os.path.join(folders[1], f) for f in os.listdir(folders[1]) if 'results' in f and u.PICKLE_SUFFIX in f]
     users = {}
-    for fn in filenames[0]:
+    for fn in first:
         tweets = u.pickle_load(fn)
         for tweet_result in tweets:
             username = tweet_result.tweet.user_screen_name
@@ -68,7 +72,7 @@ def compare_user_confidence_results(filenames):
     agreed = 0
     disagreed = 0
     distance_disagreed = []
-    for fn in filenames[1]:
+    for fn in second:
         tweets = u.pickle_load(fn)
         for tweet_result in tweets:
             username = tweet_result.tweet.user_screen_name
@@ -301,8 +305,6 @@ def aggregate_results():
                         bins[bin][category]['avg_{0}'.format(phase)] = 0
         # write summarized output
         with open(os.path.join(folder, 'summarized_binned_stats.csv'), 'w') as fout:
-            bin_header = ['bin','count_training','avg_training','count_testing','avg_testing',
-                          'count_wi_county','count_wi_100km', 'pct_wi_county', 'pct_wi_100km']
             for bin in bins:
                 csvwriter = csv.DictWriter(fout, fieldnames=bins[bin]['header'])
                 csvwriter.writeheader()
@@ -316,6 +318,6 @@ def aggregate_results():
 
 
 if __name__ == "__main__":
-    #compare_user_confidence_results([['data/geo/tr_urbanonly30k_te_rand120k/results.0.pkl.gz'],['data/geo/tr_ruralonly30k_te_rand120k/results.0.pkl.gz']])
     #generate_counties_to_ct_dict("/export/scratch2/isaacj/geometries/county_ct_mapping")
     aggregate_results()
+    compare_user_confidence_results()
