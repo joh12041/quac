@@ -7,6 +7,7 @@ import csv
 import json
 from shapely.geometry import shape
 import numpy
+import collections
 
 def main():
     ap = argparse.ArgumentParser()
@@ -244,7 +245,7 @@ def aggregate_results():
                       'count_wi_county','count_wi_100km','pct_wi_county','pct_wi_100km']
             csvwriter = csv.DictWriter(fout, fieldnames=header)
             csvwriter.writeheader()
-            od = {k:counties[k] for k in sorted(counties, key=int)}
+            od = collections.OrderedDict(sorted(counties.items(), key=lambda k: int(k[0])))
             for fips in od:
                 csvwriter.writerow(od[fips])
 
