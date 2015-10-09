@@ -5,18 +5,12 @@ import urllib.parse
 import urllib.request
 import json
 import os
+import operator
 
 
 def main():
 
-    spatial_articles_en_fn = '/Users/joh12041/GraduateSchool/wikipedia_parser/wikipedia-parsing/resources/talk_page_ids_counties.csv'
-    spatialArticleIDs = {}
-    with open(spatial_articles_en_fn, 'r') as fin:
-        csvreader = csv.reader(fin)
-        header = ['LOCAL_ID','TITLE','TALK_ID','TALK_TITLE','GEOMETRY','county_fips']
-        assert next(csvreader) == header
-        for line in csvreader:
-            spatialArticleIDs[line[header.index('TITLE')]] = True
+    spatialArticleIDs = get_spatial_articles()
 
     tweets_json_folder = '/Users/joh12041/GraduateSchool/Geolocation/quac_fork/data/geo/sample_tweets/'
     files = os.listdir(tweets_json_folder)
@@ -66,16 +60,9 @@ def main():
                 csvwriter.writerow([article, title_counts[article]])
 
 def update_spatial_counts():
-    articles_processed = {'female':956, 'male':931, 'rural':931, 'urban': 940}
-    spatial_articles_en_fn = '/Users/joh12041/GraduateSchool/wikipedia_parser/wikipedia-parsing/resources/talk_page_ids_counties.csv'
-    spatialArticleIDs = {}
-    with open(spatial_articles_en_fn, 'r') as fin:
-        csvreader = csv.reader(fin)
-        header = ['LOCAL_ID','TITLE','TALK_ID','TALK_TITLE','GEOMETRY','county_fips']
-        assert next(csvreader) == header
-        for line in csvreader:
-            spatialArticleIDs[line[header.index('TITLE')]] = True
-
+    """This function provided stats for the first round of entity analysis, not the purely random set"""
+    articles_processed = {'female':956, 'male':931, 'rural':931, 'urban': 940}  # round 1 counts
+    spatialArticleIDs = get_spatial_articles()
     tweets_json_folder = '/Users/joh12041/GraduateSchool/Geolocation/quac_fork/data/geo/sample_tweets/first_round/'
     files = os.listdir(tweets_json_folder)
     for fn in [f for f in files if '.csv' in f]:
@@ -105,5 +92,54 @@ def update_spatial_counts():
         print("{0}: {1} total entities per tweet, {2} spatial entities per tweet".format(sample, round(sum_all/articles_processed[sample], 3), round(sum_spatial/articles_processed[sample], 3)))
 
 
+def get_spatial_articles():
+    spatial_articles_en_fn = '/Users/joh12041/GraduateSchool/wikipedia_parser/wikipedia-parsing/resources/talk_page_ids_counties.csv'
+    spatialArticleIDs = {}
+    with open(spatial_articles_en_fn, 'r') as fin:
+        csvreader = csv.reader(fin)
+        header = ['LOCAL_ID','TITLE','TALK_ID','TALK_TITLE','GEOMETRY','county_fips']
+        assert next(csvreader) == header
+        for line in csvreader:
+            spatialArticleIDs[line[header.index('TITLE')]] = True
+    return spatialArticleIDs
+
+
+def summarize_entities():
+    tweets_json_folder = '/Users/joh12041/GraduateSchool/Geolocation/quac_fork/data/geo/sample_tweets/'
+    files = os.listdir(tweets_json_folder)
+    spatialArticleIDs = get_spatial_articles()
+    nonspatial_entities = {}
+    spatial_entities = {}
+    for fn in [f for f in files if '.csv' in f]:
+        print("Processing {0}".format(fn))
+        with open(tweets_json_folder + fn, 'r') as fin:
+            csvreader = csv.reader(fin)
+            assert next(csvreader) == ['wikipedia_title','count']
+            for line in csvreader:
+                title = line[0]
+                count = int(line[1])
+                if title in spatialArticleIDs:
+                    if title in spatial_entities:
+                        spatial_entities[title] += count
+                    else:
+                        spatial_entities[title] = count
+                else:
+                    if title in nonspatial_entities:
+                        nonspatial_entities[title] += count
+                    else:
+                        nonspatial_entities[title] = count
+
+    sorted_spatial_titles = sorted(spatial_entities.items(), key=operator.itemgetter(1))
+    sorted_nonspatial_titles = sorted(nonspatial_entities.items(), key=operator.itemgetter(1))
+    print("\nSpatial:")
+    for tple in sorted_spatial_titles:
+        if tple[1] > 20:
+            print("{0}: {1}".format(tple[0], tple[1]))
+    print("\nNon-spatial:")
+    for tple in sorted_nonspatial_titles:
+        if tple[1] > 20:
+            print("{0}: {1}".format(tple[0], tple[1]))
+
+
 if __name__ == "__main__":
-    main()
+    summarize_entities()

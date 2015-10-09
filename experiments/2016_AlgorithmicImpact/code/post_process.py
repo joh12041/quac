@@ -169,6 +169,153 @@ def generate_counties_to_ct_dict(geometries_fn):
         return u.pickle_load(geometries_fn)
 
 
+def aggregate_results():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('results_folders',
+                    nargs='+',
+                    help='folder containing pickled results objects')
+    args = ap.parse_args()
+
+    for folder in args.results_folders:
+        files = os.listdir(folder)
+        binned_test_fns = [os.path.join(folder, f) for f in files if 'binned.csv' in f and 'failed' not in f and 'test' in f]
+        binned_training_fns = [os.path.join(folder, f) for f in files if 'binned.csv' in f and 'failed' not in f and 'training' in f]
+        county_test_fns = [os.path.join(folder, f) for f in files if '.csv' in f and 'test' in f and 'failed' not in f and 'b' not in f]
+        county_training_fns = [os.path.join(folder, f) for f in files if '.csv' in f and 'training' in f and 'failed' not in f and 'b' not in f]
+
+        counties = {}
+        # aggregate testing counts for each county
+        for county_test_fn in county_test_fns:
+            with open(county_test_fn, 'r') as fin:
+                csvreader = csv.reader(fin)
+                header = next(csvreader)
+                fips_idx = header.index('FIPS')
+                count_idx = header.index('count_tweets')
+                wicounty_idx = header.index('within_county')
+                wi100km_idx = header.index('within_100km')
+                for line in csvreader:
+                    fips = line[fips_idx]
+                    count = int(line[count_idx])
+                    wicounty = int(line[wicounty_idx])
+                    wi100km = int(line[wi100km_idx])
+                    if fips in counties:
+                        counties[fips]['count_testing'] += count
+                        counties[fips]['count_wi_county'] += wicounty
+                        counties[fips]['count_wi_100km'] += wi100km
+                    else:
+                        counties[fips] = {'fips':fips, 'count_testing':count,
+                                          'count_wi_county':wicounty, 'count_wi_100km':wi100km}
+        # add in amount of training data for each county
+        for county_training_fn in county_training_fns:
+            with open(county_training_fn, 'r') as fin:
+                csvreader = csv.reader(fin)
+                header = next(csvreader)
+                fips_idx = header.index('FIPS')
+                count_idx = header.index('count_tweets')
+                for line in csvreader:
+                    fips = line[fips_idx]
+                    count = int(line[count_idx])
+                    if 'count_training' in counties[fips]:
+                        counties[fips]['count_training'] += count
+                    else:
+                        counties[fips]['count_training'] = count
+        # compute percentages for each county
+        for fips in counties:
+            for stat in ['county','100km']:
+                try:
+                    counties[fips]['pct_wi_{0}'.format(stat)] = round(counties[fips]['count_wi_{0}'.format(stat)] / counties[fips]['count_testing'], 3)
+                except ZeroDivisionError:
+                    counties[fips]['pct_wi_{0}'.format(stat)] = 0
+            for phase in ['training','testing']:
+                try:
+                    counties[fips]['avg_{0}'.format(phase)] = round(counties[fips]['count_{0}'.format(phase)] / len(county_test_fns), 3)
+                except ZeroDivisionError:
+                    counties[fips]['avg_{0}'.format(phase)] = 0
+        # write summarized output
+        with open(os.path.join(folder, 'summarized_county_stats.csv'), 'w') as fout:
+            header = ['fips','count_training','count_testing','avg_training','avg_testing',
+                      'count_wi_county','count_wi_100km','pct_wi_county','pct_wi_100km']
+            csvwriter = csv.DictWriter(fout, fieldnames=header)
+            csvwriter.writeheader()
+            for fips in counties:
+                csvwriter.writerow(counties[fips])
+
+        bins = {}
+        bin_headers_idx0 = ['age','race','urban','gender']
+        current_bin = None
+        bin_idx = 0
+        for binned_test_fn in binned_test_fns:
+            with open(binned_test_fn, 'r') as fin:
+                csvreader = csv.reader(fin)
+                for line in csvreader:
+                    if line[bin_idx] in bin_headers_idx0:
+                        current_bin = line[bin_idx]
+                        header = line
+                        count_idx = header.index('count_tweets')
+                        wicounty_idx = header.index('within_county')
+                        wi100km_idx = header.index('within_100km')
+                        if current_bin not in bins:
+                            bins[current_bin] = {'header':[current_bin,'count_training','avg_training','count_testing','avg_testing',
+                                                           'count_wi_county', 'count_wi_100km', 'pct_wi_county', 'pct_wi_100km']}
+                    else:
+                        category = line[bin_idx]
+                        count = int(line[count_idx])
+                        wicounty = int(line[wicounty_idx])
+                        wi100km = int(line[wi100km_idx])
+                        if category in bins[current_bin]:
+                            bins[current_bin][category]['count_testing'] += count
+                            bins[current_bin][category]['count_wi_county'] += wicounty
+                            bins[current_bin][category]['count_wi_100km'] += wi100km
+                        else:
+                            bins[current_bin][category] = {current_bin:category, 'count_testing':count,
+                                                                'count_wi_county':wicounty, 'count_wi_100km':wi100km}
+        for binned_training_fn in binned_training_fns:
+            with open(binned_training_fn, 'r') as fin:
+                csvreader = csv.reader(fin)
+                for line in csvreader:
+                    if line[bin_idx] in bin_headers_idx0:
+                        current_bin = line[bin_idx]
+                        header = line
+                        count_idx = header.index('count_tweets')
+                    else:
+                        count = int(line[count_idx])
+                        category = line[bin_idx]
+                        if 'count_training' in bins[current_bin][category]:
+                            bins[current_bin][category]['count_training'] += count
+                        else:
+                            bins[current_bin][category]['count_training'] = count
+        # compute percentages/averages for each bin
+        for bin in bins:
+            for category in bins[bin]:
+                if category == 'header':
+                    continue
+                for stat in ['county','100km']:
+                    try:
+                        bins[bin][category]['pct_wi_{0}'.format(stat)] = round(bins[bin][category]['count_wi_{0}'.format(stat)] / bins[bin][category]['count_testing'], 3)
+                    except ZeroDivisionError:
+                        bins[bin][category]['pct_wi_{0}'.format(stat)] = 0
+                for phase in ['training','testing']:
+                    try:
+                        bins[bin][category]['avg_{0}'.format(phase)] = round(bins[bin][category]['count_{0}'.format(phase)] / len(binned_test_fns), 3)
+                    except ZeroDivisionError:
+                        bins[bin][category]['avg_{0}'.format(phase)] = 0
+        # write summarized output
+        with open(os.path.join(folder, 'summarized_binned_stats.csv'), 'w') as fout:
+            bin_header = ['bin','count_training','avg_training','count_testing','avg_testing',
+                          'count_wi_county','count_wi_100km', 'pct_wi_county', 'pct_wi_100km']
+            for bin in bins:
+                csvwriter = csv.DictWriter(fout, fieldnames=bins[bin]['header'])
+                csvwriter.writeheader()
+                for category in bins[bin]:
+                    if category == 'header':
+                        continue
+                    csvwriter.writerow(bins[bin][category])
+                csvwriter.writerow({})
+                fout.flush()
+
+
+
 if __name__ == "__main__":
     #compare_user_confidence_results([['data/geo/tr_urbanonly30k_te_rand120k/results.0.pkl.gz'],['data/geo/tr_ruralonly30k_te_rand120k/results.0.pkl.gz']])
-    generate_counties_to_ct_dict("/export/scratch2/isaacj/geometries/county_ct_mapping")
+    #generate_counties_to_ct_dict("/export/scratch2/isaacj/geometries/county_ct_mapping")
+    aggregate_results()
