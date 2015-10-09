@@ -22,6 +22,7 @@ def main():
     files = os.listdir(tweets_json_folder)
     for fn in [f for f in files if '.json' in f]:
         with open(tweets_json_folder + fn, 'r') as fin:
+            print("\nProcessing {0}.".format(fn))
             count_spatial = 0
             count_all = 0
             count_skipped = 0
@@ -57,6 +58,7 @@ def main():
                     count_skipped += 1
                     continue
         print('{0} entities of which {1} were spatial out of {2} articles'.format(count_all, count_spatial, i - count_skipped))
+        print('{0} total entities per tweet, {1} spatial entities per tweet.'.format(round(count_all / (i - count_skipped), 3), round(count_spatial / (i - count_skipped), 3)))
         with open(tweets_json_folder + fn.replace('.json', '_wikiconceptcounts.csv'), 'w') as fout:
             csvwriter = csv.writer(fout)
             csvwriter.writerow(['wikipedia_title','count'])
@@ -74,7 +76,7 @@ def update_spatial_counts():
         for line in csvreader:
             spatialArticleIDs[line[header.index('TITLE')]] = True
 
-    tweets_json_folder = '/Users/joh12041/GraduateSchool/Geolocation/quac_fork/data/geo/sample_tweets/'
+    tweets_json_folder = '/Users/joh12041/GraduateSchool/Geolocation/quac_fork/data/geo/sample_tweets/first_round/'
     files = os.listdir(tweets_json_folder)
     for fn in [f for f in files if '.csv' in f]:
         if 'female' in fn:
@@ -104,4 +106,4 @@ def update_spatial_counts():
 
 
 if __name__ == "__main__":
-    update_spatial_counts()
+    main()
