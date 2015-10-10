@@ -15,7 +15,7 @@ def main():
                     nargs='+',
                     help='folder containing pickled results objects')
     ap.add_argument('output_user_csv',
-                    help='path to csv containing users from this model, their cae, and predication area')
+                    help='path to csv containing users from this model, their sae, and predication area')
     ap.add_argument('compare_user_confidence',
                     type=int,
                     default=0,
@@ -65,12 +65,12 @@ def compare_user_confidence_results():
                     username = tweet_result.tweet.user_screen_name
                     tid = tweet_result.tweet.id
                     pa95 = tweet_result.location_estimate.pred_area
-                    cae = tweet_result.cae
+                    sae = tweet_result.sae
                     if (username, tid) in users:
-                        if cae < users[(username, tid)][1]:
-                            users[(username, tid)] = (pa95, cae)
+                        if sae < users[(username, tid)][1]:
+                            users[(username, tid)] = (pa95, sae)
                     else:
-                        users[(username, tid)] = (pa95, cae)
+                        users[(username, tid)] = (pa95, sae)
         agreed = 0
         disagreed = 0
         distance_disagreed = []
@@ -83,19 +83,19 @@ def compare_user_confidence_results():
                 if (username, tid) in users:
                     if tweet_result.location_estimate:
                         pa95_smaller = tweet_result.location_estimate.pred_area < users[(username, tid)][0]
-                        cae_smaller = tweet_result.cae < users[(username, tid)][1]
-                        if pa95_smaller and cae_smaller:
+                        sae_smaller = tweet_result.sae < users[(username, tid)][1]
+                        if pa95_smaller and sae_smaller:
                             agreed += 1
-                        elif not pa95_smaller and not cae_smaller:
+                        elif not pa95_smaller and not sae_smaller:
                             agreed += 1
                         else:
                             disagreed += 1
-                            distance_disagreed.append(abs(tweet_result.cae - users[(username, tid)][1]))
-        print("{0} tweets lined up with a smaller 95% prediction area = smaller cae between models and {1} disagreed.".format(agreed, disagreed))
-        print("{0} median difference in CAE for disagreements.".format(numpy.median(distance_disagreed)))
-        print("{0} average difference in CAE for disagreements.".format(numpy.average(distance_disagreed)))
-        print("{0} 1st quartile difference in CAE for disagreements.".format(numpy.percentile(distance_disagreed, 25)))
-        print("{0} 3rd quartile difference in CAE for disagreements.".format(numpy.percentile(distance_disagreed, 75)))
+                            distance_disagreed.append(abs(tweet_result.sae - users[(username, tid)][1]))
+        print("{0} tweets lined up with a smaller 95% prediction area = smaller SAE between models and {1} disagreed.".format(agreed, disagreed))
+        print("{0} median difference in SAE for disagreements.".format(numpy.median(distance_disagreed)))
+        print("{0} average difference in SAE for disagreements.".format(numpy.average(distance_disagreed)))
+        print("{0} 1st quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 25)))
+        print("{0} 3rd quartile difference in SAE for disagreements.".format(numpy.percentile(distance_disagreed, 75)))
 
 def generate_counties_to_ct_dict(geometries_fn):
     if not os.path.exists(geometries_fn + u.PICKLE_SUFFIX):
