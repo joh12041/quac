@@ -23,4 +23,4 @@ model-test \
     --ses urban \
     --how_filter ruralf \
     --filter_testing 0 \
-    $GEODB $JOBDIR/tr_ruralonly30k_te_rand120k
+    $GEODB $JOBDIR/tr_ruralonly30k_te_rand60k

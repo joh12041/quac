@@ -23,4 +23,4 @@ model-test \
     --ses urban \
     --how_filter urbanf \
     --filter_testing 0 \
-    $GEODB $JOBDIR/tr_urbanonly30k_te_rand120k
+    $GEODB $JOBDIR/tr_urbanonly30k_te_rand60k

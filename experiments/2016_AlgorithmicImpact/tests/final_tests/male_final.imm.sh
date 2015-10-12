@@ -23,4 +23,4 @@ model-test \
     --ses gender \
     --how_filter male-only \
     --filter_testing 0 \
-    $GEODB $JOBDIR/tr_maleonly30k_te_rand120k
+    $GEODB $JOBDIR/tr_maleonly30k_te_rand60k
