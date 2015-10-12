@@ -53,7 +53,7 @@ def main():
 def compare_user_confidence_results():
     groups = [['rural','urban'],['male','female']]
     for to_compare in groups:
-        folders = ['/export/scratch2/isaacj/Johnson_quac/data/geo/tr_{0}only30k_te_rand120k'.format(tc) for tc in to_compare]
+        folders = ['/export/scratch2/isaacj/Johnson_quac/data/geo/tr_{0}only30k_te_rand60k'.format(tc) for tc in to_compare]
         first = [os.path.join(folders[0], f) for f in os.listdir(folders[0]) if 'results' in f and u.PICKLE_SUFFIX in f]
         second = [os.path.join(folders[1], f) for f in os.listdir(folders[1]) if 'results' in f and u.PICKLE_SUFFIX in f]
         users = {}
