@@ -191,6 +191,7 @@ def aggregate_results():
         county_test_fns = [os.path.join(folder, f) for f in files if '.csv' in f and 'test' in f and 'failed' not in f and 'b' not in f]
         county_training_fns = [os.path.join(folder, f) for f in files if '.csv' in f and 'training' in f and 'failed' not in f and 'b' not in f]
 
+
         counties = {}
         # aggregate testing counts for each county
         for county_test_fn in county_test_fns:
