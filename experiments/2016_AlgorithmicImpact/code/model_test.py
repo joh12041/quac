@@ -376,7 +376,7 @@ class Test(object):
                 sum = 0
                 for val in weights[w]:
                     sum = sum + weights[w][val]
-                assert abs(sum - 1) > 0.003, "Weights unbalanced for {0}".format(w)
+                assert abs(sum - 1) < 0.003, "Weights unbalanced for {0}".format(w)
 
         elif ses == 'pct15to34':  # By county, <20 := <20% of people between ages 15-34, >=40 := >=40% of people between ages 15-34
             weights = {'balanced' : {'<20':0.021, '20-24':0.171, '24-27':0.282, '27-32':0.430, '32-40':0.083, '>=40':0.014},
