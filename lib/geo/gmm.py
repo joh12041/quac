@@ -19,6 +19,7 @@ import numpy as np
 import osgeo.gdal as ogdal
 from sklearn.datasets.samples_generator import make_blobs
 import sklearn.mixture
+import gensim
 
 import multicore
 import testable
@@ -40,6 +41,8 @@ l = u.l
 # FIXME: This approach probably depends on only one instance of one class from
 # this module being instantiated per process.
 model_parms = None
+w2v = None
+w2v_fn = "/export/scratch2/isaacj/Johnson_quac/word2vec/glove.twitter.27B.200d.txt"
 
 # Default model parameters. It's a function rather than a variable because we
 # need to refer to functions which are not yet defined.
@@ -223,7 +226,23 @@ def cae(token, points, token_gmms):
    return w
 
 def relevant_gmms(tokens, token_gmms):
-   return [ token_gmms[t] for t in tokens if t in token_gmms ]
+   if not getattr(model_parms, 'word2vec', False):
+      return [ token_gmms[t] for t in tokens if t in token_gmms ]
+   else:
+      final = []
+      for t in tokens:
+         if t in token_gmms:
+            final.append(token_gmms[t])
+         else:
+            try:
+               for mostsim in w2v.most_similar(t)[:3]:
+                  replacement_word = mostsim[0]
+                  if replacement_word in token_gmms:
+                     final.append(token_gmms[replacement_word])
+                     break
+            except KeyError:
+               continue
+      return final
 
 
 # Options for parameter weight_f. This is a function which takes a token:Model
@@ -790,6 +809,10 @@ class Model(base.Model):
       # See above for more on this kludge.
       global model_parms
       model_parms = class_.parms
+      global w2v
+      if getattr(model_parms, 'word2vec', False):
+         w2v = gensim.models.Word2Vec.load_word2vec_format(w2v_fn, binary=False)
+         l.info("word2vec loaded from {0}.".format(w2v_fn))
 
 
 class Message(Model):
