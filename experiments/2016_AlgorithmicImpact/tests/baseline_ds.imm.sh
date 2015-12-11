@@ -24,4 +24,4 @@ model-test \
     --ses random \
     --how_filter random \
     --filter_testing 0 \
-    $GEODB $JOBDIR/tr_rand30k_te_rand120k
+    $GEODB $JOBDIR/tr_rand30kplusDS_te_rand120k
