@@ -226,7 +226,7 @@ def cae(token, points, token_gmms):
    return w
 
 def relevant_gmms(tokens, token_gmms):
-   if not getattr(model_parms, 'word2vec', False):
+   if not model_parms.get('word2vec', False):
       return [ token_gmms[t] for t in tokens if t in token_gmms ]
    else:
       final = []
@@ -810,7 +810,7 @@ class Model(base.Model):
       global model_parms
       model_parms = class_.parms
       global w2v
-      if getattr(model_parms, 'word2vec', False):
+      if model_parms.get('word2vec', False):
          w2v = gensim.models.Word2Vec.load_word2vec_format(w2v_fn, binary=False)
          l.info("word2vec loaded from {0}.".format(w2v_fn))
 
