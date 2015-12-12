@@ -254,10 +254,6 @@ gr.add_argument('--filter_testing',
                 type=lambda s: bool(int(s)),
                 default=False,
                 help='Set to True to filter testing tweets by SES as well')
-gr.add_argument('--word2vec',
-                action='store_true',
-                default=False,
-                help='use word2vec library to improve token recall')
 
 try:
 

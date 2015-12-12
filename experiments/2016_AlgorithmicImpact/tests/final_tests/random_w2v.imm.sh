@@ -7,7 +7,7 @@
 model-test \
     --min-instances 3 \
     --model geo.gmm.Token \
-    --model-parms weight_f:wt_inv_error_sae \
+    --model-parms weight_f:wt_inv_error_sae word2vec:True \
     --test-tweet-limit 60000 \
     --train-tweet-limit 30000 \
     --start $START \
@@ -23,5 +23,4 @@ model-test \
     --ses random \
     --how_filter random \
     --filter_testing 0 \
-    --word2vec \
     $GEODB $JOBDIR/tr_random30kw2v_te_rand60k
