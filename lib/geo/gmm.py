@@ -63,7 +63,8 @@ def MODEL_PARMS_DEFAULT():
             'weight_min':             0.001,
             'wt_inv_error_exponent':  4.0,
             'wt_inv_min_tweets':      3,
-            'wt_inv_sample_ct':       100 }
+            'wt_inv_sample_ct':       100,
+            'word2vec':               False}
 
 
 def gmm_fit_tokenpoints(token, points):
