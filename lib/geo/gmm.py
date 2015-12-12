@@ -227,7 +227,7 @@ def cae(token, points, token_gmms):
    return w
 
 def relevant_gmms(tokens, token_gmms):
-   if not model_parms.get('word2vec', False):
+   if not model_parms['word2vec']:
       return [ token_gmms[t] for t in tokens if t in token_gmms ]
    else:
       final = []
@@ -811,9 +811,11 @@ class Model(base.Model):
       global model_parms
       model_parms = class_.parms
       global w2v
-      if model_parms.get('word2vec', False):
+      if model_parms['word2vec']:
          w2v = gensim.models.Word2Vec.load_word2vec_format(w2v_fn, binary=False)
          l.info("word2vec loaded from {0}.".format(w2v_fn))
+         with open("/export/scratch2/isaacj/w2v_working_QUAC.txt", 'a') as fout:
+            fout.write("Working! " + time.localtime())
 
 
 class Message(Model):
