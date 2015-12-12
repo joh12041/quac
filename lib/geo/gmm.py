@@ -42,7 +42,7 @@ l = u.l
 # this module being instantiated per process.
 model_parms = None
 w2v = None
-w2v_fn = "/export/scratch2/isaacj/Johnson_quac/word2vec/glove.twitter.27B.200d.txt"
+w2v_fn = "/export/scratch2/isaacj/word2vec/glove.twitter.27B.200d.txt"
 
 # Default model parameters. It's a function rather than a variable because we
 # need to refer to functions which are not yet defined.
