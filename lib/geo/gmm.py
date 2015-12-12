@@ -814,8 +814,6 @@ class Model(base.Model):
          global w2v
          w2v = gensim.models.Word2Vec.load_word2vec_format(w2v_fn, binary=False)
          l.info("word2vec loaded from {0}.".format(w2v_fn))
-         with open("/export/scratch2/isaacj/w2v_working_QUAC.txt", 'a') as fout:
-            fout.write("Working! " + time.localtime())
 
 
 class Message(Model):
