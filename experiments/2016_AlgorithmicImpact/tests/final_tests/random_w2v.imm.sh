@@ -5,6 +5,7 @@
 . $(dirname $0)/parseargs.sh
 
 model-test \
+    --trim-head 0.05 \
     --min-instances 3 \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae word2vec:True \
