@@ -494,7 +494,7 @@ class Test(object):
             with open("/export/scratch2/isaacj/sorted_quac_tokens.txt", "w") as fout:
                 csvwriter = csv.writer(fout)
                 for i,t in enumerate(tokens):
-                    csvwriter.write([i,t[0],len(t[1])])
+                    csvwriter.writerow([i,t[0],len(t[1])])
         tokens = tokens[int(round(trim_head_frac * len(tokens))):]
         l.debug('%d tokens after head trim' % (len(tokens)))
         assert (len(tokens) > 0)
