@@ -266,7 +266,7 @@ def aggregate_results():
                         wi100km_idx = header.index('within_100km')
                         if current_bin not in bins:
                             bins[current_bin] = {'header':[current_bin,'count_training','avg_training','count_testing','avg_testing',
-                                                           'count_wi_county', 'count_wi_100km', 'pct_wi_county', 'pct_wi_100km']}
+                                                           'count_wi_county', 'count_wi_100km', 'pct_wi_county', 'pct_wi_100km', '1.5I_CI']}
                     else:
                         category = line[bin_idx]
                         count = int(line[count_idx])
@@ -276,9 +276,11 @@ def aggregate_results():
                             bins[current_bin][category]['count_testing'] += count
                             bins[current_bin][category]['count_wi_county'] += wicounty
                             bins[current_bin][category]['count_wi_100km'] += wi100km
+                            bins[current_bin][category]['pct_wi_100km'].append(wi100km / count)
                         else:
                             bins[current_bin][category] = {current_bin:category, 'count_testing':count,
-                                                                'count_wi_county':wicounty, 'count_wi_100km':wi100km}
+                                                           'count_wi_county':wicounty, 'count_wi_100km':wi100km,
+                                                           'pct_wi_100km':[wi100km / count], '1.5I_CI':None}
         for binned_training_fn in binned_training_fns:
             with open(binned_training_fn, 'r') as fin:
                 csvreader = csv.reader(fin)
@@ -299,6 +301,13 @@ def aggregate_results():
             for category in bins[bin]:
                 if category == 'header':
                     continue
+                try:
+                    median = numpy.median(bins[bin][category]['pct_wi_100km'])
+                    q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
+                    q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
+                    bins[bin][category]['1.5I_CI'] = '{0} +- {1}'.format(round(median, 3), round(1.5*(q3-q1),3))
+                except ZeroDivisionError:
+                    pass
                 for stat in ['county','100km']:
                     try:
                         bins[bin][category]['pct_wi_{0}'.format(stat)] = round(bins[bin][category]['count_wi_{0}'.format(stat)] / bins[bin][category]['count_testing'], 3)
