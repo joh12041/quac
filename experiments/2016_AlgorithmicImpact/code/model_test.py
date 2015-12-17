@@ -490,6 +490,11 @@ class Test(object):
         # remove frequent
         assert (0 <= trim_head_frac < 1)
         tokens.sort(key=lambda i: len(i[1]), reverse=True)
+        if (True):
+            with open("/export/scratch2/isaacj/sorted_quac_tokens.txt", "w") as fout:
+                csvwriter = csv.writer(fout)
+                for i,t in enumerate(tokens):
+                    csvwriter.writerow([i,t[0],len(t[1])])
         tokens = tokens[int(round(trim_head_frac * len(tokens))):]
         l.debug('%d tokens after head trim' % (len(tokens)))
         assert (len(tokens) > 0)
