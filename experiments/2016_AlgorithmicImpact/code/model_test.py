@@ -379,7 +379,7 @@ class Test(object):
                 sum = 0
                 for val in weights[w]:
                     sum = sum + weights[w][val]
-                if abs(sum - 1) < 0.003:
+                if abs(sum - 1) > 0.003:
                     print("Weights unbalanced for {0}".format(w))
 
         elif ses == 'pct15to34':  # By county, <20 := <20% of people between ages 15-34, >=40 := >=40% of people between ages 15-34
