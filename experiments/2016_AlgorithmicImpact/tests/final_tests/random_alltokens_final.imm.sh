@@ -5,7 +5,7 @@
 . $(dirname $0)/parseargs.sh
 
 model-test \
-    --min-instances 1 \
+    --min-instances 2 \
     --model geo.gmm.Token \
     --model-parms weight_f:wt_inv_error_sae \
     --test-tweet-limit 60000 \
