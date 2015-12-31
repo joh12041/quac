@@ -306,14 +306,14 @@ def aggregate_results():
                     all_vals.append(bins[bin][category]['pct_wi_100km'])
                 q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
                 q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
-                print("Urban Confidence Interval: {0}".format(format(1.5*(q3-q1),3)))
+                print("Urban Confidence Interval: {0}".format(round(1.5*(q3-q1),3)))
                 # rural
                 all_vals = []
                 for category in ['5','6']:
                     all_vals.append(bins[bin][category]['pct_wi_100km'])
                 q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
                 q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
-                print("Rural Confidence Interval: {0}".format(format(1.5*(q3-q1),3)))
+                print("Rural Confidence Interval: {0}".format(round(1.5*(q3-q1),3)))
                 # overall
                 all_vals = []
                 for category in bins[bin]:
