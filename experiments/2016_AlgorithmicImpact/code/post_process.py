@@ -185,6 +185,7 @@ def aggregate_results():
     args = ap.parse_args()
 
     for folder in args.results_folders:
+        print("Processing {0}".format(folder))
         files = os.listdir(folder)
         binned_test_fns = [os.path.join(folder, f) for f in files if 'binned.csv' in f and 'failed' not in f and 'test' in f]
         binned_training_fns = [os.path.join(folder, f) for f in files if 'binned.csv' in f and 'failed' not in f and 'training' in f]
@@ -298,6 +299,28 @@ def aggregate_results():
                             bins[current_bin][category]['count_training'] = count
         # compute percentages/averages for each bin
         for bin in bins:
+            if bin == 'urban':
+                # urban
+                all_vals = []
+                for category in ['1','2']:
+                    all_vals.append(bins[bin][category]['pct_wi_100km'])
+                q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
+                q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
+                print("Urban Confidence Interval: {0}".format(format(1.5*(q3-q1),3)))
+                # rural
+                all_vals = []
+                for category in ['5','6']:
+                    all_vals.append(bins[bin][category]['pct_wi_100km'])
+                q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
+                q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
+                print("Rural Confidence Interval: {0}".format(format(1.5*(q3-q1),3)))
+                # overall
+                all_vals = []
+                for category in bins[bin]:
+                    all_vals.append(bins[bin][category]['pct_wi_100km'])
+                q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
+                q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
+                print("Overall Confidence Interval: {0}".format(round(1.5*(q3-q1),3)))
             for category in bins[bin]:
                 if category == 'header':
                     continue
