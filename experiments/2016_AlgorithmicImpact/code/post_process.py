@@ -317,6 +317,8 @@ def aggregate_results():
                 # overall
                 all_vals = []
                 for category in bins[bin]:
+                    if category == 'header':
+                        continue
                     all_vals.append(bins[bin][category]['pct_wi_100km'])
                 q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
                 q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
