@@ -306,7 +306,7 @@ def aggregate_results():
                 for i in range(0, len(bins[bin]['1'])):
                     c_wi100km = bins[bin]['1']['count_wi_100km'][i] + bins[bin]['2']['count_wi_100km'][i]
                     c_testing = bins[bin]['1']['count_testing'][i] + bins[bin]['2']['count_testing'][i]
-                    all_vals.extend(c_wi100km / c_testing)
+                    all_vals.extend([c_wi100km / c_testing])
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
                 print("Urban Confidence Interval: {0}".format(round(150*(q3-q1),3))) # multiplied by 100 for percentages
@@ -315,7 +315,7 @@ def aggregate_results():
                 for i in range(0, len(bins[bin]['5'])):
                     c_wi100km = bins[bin]['5']['count_wi_100km'][i] + bins[bin]['6']['count_wi_100km'][i]
                     c_testing = bins[bin]['5']['count_testing'][i] + bins[bin]['6']['count_testing'][i]
-                    all_vals.extend(c_wi100km / c_testing)
+                    all_vals.extend([c_wi100km / c_testing])
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
                 print("Rural Confidence Interval: {0}".format(round(150*(q3-q1),3))) # multiplied by 100 for percentages
@@ -328,7 +328,7 @@ def aggregate_results():
                     c_testing = bins[bin]['1']['count_testing'][i] + bins[bin]['2']['count_testing'][i] +\
                                 bins[bin]['3']['count_testing'][i] + bins[bin]['4']['count_testing'][i] +\
                                 bins[bin]['5']['count_testing'][i] + bins[bin]['6']['count_testing'][i]
-                    all_vals.extend(c_wi100km / c_testing)
+                    all_vals.extend([c_wi100km / c_testing])
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
                 print("Overall Confidence Interval: {0}".format(round(150*(q3-q1),3))) # multiplied by 100 for percentages
