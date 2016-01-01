@@ -275,13 +275,13 @@ def aggregate_results():
                         wicounty = int(line[wicounty_idx])
                         wi100km = int(line[wi100km_idx])
                         if category in bins[current_bin]:
-                            bins[current_bin][category]['count_testing'] += count
+                            bins[current_bin][category]['count_testing'].append(count)
                             bins[current_bin][category]['count_wi_county'] += wicounty
-                            bins[current_bin][category]['count_wi_100km'] += wi100km
+                            bins[current_bin][category]['count_wi_100km'].append(wi100km)
                             bins[current_bin][category]['pct_wi_100km'].append(wi100km / count)
                         else:
-                            bins[current_bin][category] = {current_bin:category, 'count_testing':count,
-                                                           'count_wi_county':wicounty, 'count_wi_100km':wi100km,
+                            bins[current_bin][category] = {current_bin:category, 'count_testing':[count],
+                                                           'count_wi_county':wicounty, 'count_wi_100km':[wi100km],
                                                            'pct_wi_100km':[wi100km / count], '1.5I_CI':None}
         for binned_training_fn in binned_training_fns:
             with open(binned_training_fn, 'r') as fin:
@@ -301,7 +301,6 @@ def aggregate_results():
         # compute percentages/averages for each bin
         for bin in bins:
             if bin == 'urban':
-                print(bins[bin]['1'])
                 # urban
                 all_vals = []
                 for i in range(0, len(bins[bin]['1'])):
@@ -337,6 +336,7 @@ def aggregate_results():
                 if category == 'header':
                     continue
                 try:
+                    bins[bin][category] = numpy.sum(bins[bin][category])
                     median = numpy.median(bins[bin][category]['pct_wi_100km'])
                     q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
                     q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
