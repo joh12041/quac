@@ -9,6 +9,7 @@ from shapely.geometry import shape
 import numpy
 import collections
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('results_folders',
@@ -270,7 +271,7 @@ def aggregate_results():
                                                            'count_wi_county', 'count_wi_100km', 'pct_wi_county', 'pct_wi_100km', '1.5I_CI']}
                     else:
                         category = line[bin_idx]
-                        count = int(line[count_idx])
+                        count = float(line[count_idx])
                         wicounty = int(line[wicounty_idx])
                         wi100km = int(line[wi100km_idx])
                         if category in bins[current_bin]:
@@ -302,24 +303,32 @@ def aggregate_results():
             if bin == 'urban':
                 # urban
                 all_vals = []
-                for category in ['1','2']:
-                    all_vals.append(bins[bin][category]['pct_wi_100km'])
+                for i in range(0, len(bins[bin]['1'])):
+                    c_wi100km = bins[bin]['1'][i]['count_wi_100km'] + bins[bin]['2'][i]['count_wi_100km']
+                    c_testing = bins[bin]['1'][i]['count_testing'] + bins[bin]['2'][i]['count_testing']
+                    all_vals.extend(c_wi100km / c_testing)
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
                 print("Urban Confidence Interval: {0}".format(round(150*(q3-q1),3))) # multiplied by 100 for percentages
                 # rural
                 all_vals = []
-                for category in ['5','6']:
-                    all_vals.append(bins[bin][category]['pct_wi_100km'])
+                for i in range(0, len(bins[bin]['5'])):
+                    c_wi100km = bins[bin]['5'][i]['count_wi_100km'] + bins[bin]['6'][i]['count_wi_100km']
+                    c_testing = bins[bin]['5'][i]['count_testing'] + bins[bin]['6'][i]['count_testing']
+                    all_vals.extend(c_wi100km / c_testing)
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
                 print("Rural Confidence Interval: {0}".format(round(150*(q3-q1),3))) # multiplied by 100 for percentages
                 # overall
                 all_vals = []
-                for category in bins[bin]:
-                    if category == 'header':
-                        continue
-                    all_vals.append(bins[bin][category]['pct_wi_100km'])
+                for i in range(0, len(bins[bin]['5'])):
+                    c_wi100km = bins[bin]['1'][i]['count_wi_100km'] + bins[bin]['2'][i]['count_wi_100km'] +\
+                                bins[bin]['3'][i]['count_wi_100km'] + bins[bin]['4'][i]['count_wi_100km'] +\
+                                bins[bin]['5'][i]['count_wi_100km'] + bins[bin]['6'][i]['count_wi_100km']
+                    c_testing = bins[bin]['1'][i]['count_testing'] + bins[bin]['2'][i]['count_testing'] +\
+                                bins[bin]['3'][i]['count_testing'] + bins[bin]['4'][i]['count_testing'] +\
+                                bins[bin]['5'][i]['count_testing'] + bins[bin]['6'][i]['count_testing']
+                    all_vals.extend(c_wi100km / c_testing)
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
                 print("Overall Confidence Interval: {0}".format(round(150*(q3-q1),3))) # multiplied by 100 for percentages
