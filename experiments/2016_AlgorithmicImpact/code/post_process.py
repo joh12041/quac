@@ -301,6 +301,7 @@ def aggregate_results():
         # compute percentages/averages for each bin
         for bin in bins:
             if bin == 'urban':
+                print(bins[bin]['1'])
                 # urban
                 all_vals = []
                 for i in range(0, len(bins[bin]['1'])):
