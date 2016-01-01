@@ -336,7 +336,8 @@ def aggregate_results():
                 if category == 'header':
                     continue
                 try:
-                    bins[bin][category] = numpy.sum(bins[bin][category])
+                    bins[bin][category]['count_testing'] = numpy.sum(bins[bin][category]['count_testing'])
+                    bins[bin][category]['count_wi_100km'] = numpy.sum(bins[bin][category]['count_wi_100km'])
                     median = numpy.median(bins[bin][category]['pct_wi_100km'])
                     q1 = numpy.percentile(bins[bin][category]['pct_wi_100km'],25)
                     q3 = numpy.percentile(bins[bin][category]['pct_wi_100km'],75)
