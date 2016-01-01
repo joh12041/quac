@@ -304,8 +304,8 @@ def aggregate_results():
                 # urban
                 all_vals = []
                 for i in range(0, len(bins[bin]['1'])):
-                    c_wi100km = bins[bin]['1'][i]['count_wi_100km'] + bins[bin]['2'][i]['count_wi_100km']
-                    c_testing = bins[bin]['1'][i]['count_testing'] + bins[bin]['2'][i]['count_testing']
+                    c_wi100km = bins[bin]['1']['count_wi_100km'][i] + bins[bin]['2']['count_wi_100km'][i]
+                    c_testing = bins[bin]['1']['count_testing'][i] + bins[bin]['2']['count_testing'][i]
                     all_vals.extend(c_wi100km / c_testing)
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
@@ -313,8 +313,8 @@ def aggregate_results():
                 # rural
                 all_vals = []
                 for i in range(0, len(bins[bin]['5'])):
-                    c_wi100km = bins[bin]['5'][i]['count_wi_100km'] + bins[bin]['6'][i]['count_wi_100km']
-                    c_testing = bins[bin]['5'][i]['count_testing'] + bins[bin]['6'][i]['count_testing']
+                    c_wi100km = bins[bin]['5']['count_wi_100km'][i] + bins[bin]['6']['count_wi_100km'][i]
+                    c_testing = bins[bin]['5']['count_testing'][i] + bins[bin]['6']['count_testing'][i]
                     all_vals.extend(c_wi100km / c_testing)
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
@@ -322,12 +322,12 @@ def aggregate_results():
                 # overall
                 all_vals = []
                 for i in range(0, len(bins[bin]['5'])):
-                    c_wi100km = bins[bin]['1'][i]['count_wi_100km'] + bins[bin]['2'][i]['count_wi_100km'] +\
-                                bins[bin]['3'][i]['count_wi_100km'] + bins[bin]['4'][i]['count_wi_100km'] +\
-                                bins[bin]['5'][i]['count_wi_100km'] + bins[bin]['6'][i]['count_wi_100km']
-                    c_testing = bins[bin]['1'][i]['count_testing'] + bins[bin]['2'][i]['count_testing'] +\
-                                bins[bin]['3'][i]['count_testing'] + bins[bin]['4'][i]['count_testing'] +\
-                                bins[bin]['5'][i]['count_testing'] + bins[bin]['6'][i]['count_testing']
+                    c_wi100km = bins[bin]['1']['count_wi_100km'][i] + bins[bin]['2']['count_wi_100km'][i] +\
+                                bins[bin]['3']['count_wi_100km'][i] + bins[bin]['4']['count_wi_100km'][i] +\
+                                bins[bin]['5']['count_wi_100km'][i] + bins[bin]['6']['count_wi_100km'][i]
+                    c_testing = bins[bin]['1']['count_testing'][i] + bins[bin]['2']['count_testing'][i] +\
+                                bins[bin]['3']['count_testing'][i] + bins[bin]['4']['count_testing'][i] +\
+                                bins[bin]['5']['count_testing'][i] + bins[bin]['6']['count_testing'][i]
                     all_vals.extend(c_wi100km / c_testing)
                 q1 = numpy.percentile(all_vals,25)
                 q3 = numpy.percentile(all_vals,75)
